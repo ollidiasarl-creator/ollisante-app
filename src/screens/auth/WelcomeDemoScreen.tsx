@@ -43,6 +43,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const [countries, setCountries] = useState<Country[]>([]);
   const [country, setCountry] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
+  // Bloc touché (Patient, Médecin, Structure) : le pays est demandé d'abord, comme sur le site, puis on continue.
+  const [pending, setPending] = useState<'patient' | 'practitioner' | 'structure' | null>(null);
   const [news, setNews] = useState<News[]>([]);
   const [whatsapp, setWhatsapp] = useState<string | null>(null);
   const meta = useNewsMeta(countries);
@@ -87,7 +89,20 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     setCountry(code);
     setPicking(false);
     void countryStore.save(code ?? ALL);
+    const next = pending;
+    setPending(null);
+    if (!next || !code) return;
+    if (next === 'patient') navigation.navigate('BookFacility', { countryCode: code });
+    else navigation.navigate('ProInfo', { profile: next });
   }
+  const ask = (profile: 'patient' | 'practitioner' | 'structure') => {
+    setPending(profile);
+    setPicking(true);
+  };
+  const close = () => {
+    setPicking(false);
+    setPending(null);
+  };
 
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
@@ -144,9 +159,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
 
         <View style={[styles.section, styles.first]}>
-          {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => navigation.navigate('BookFacility', { countryCode: country }))}
-          {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => navigation.navigate('ProInfo', { profile: 'practitioner' }))}
-          {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => navigation.navigate('ProInfo', { profile: 'structure' }))}
+          {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => ask('patient'))}
+          {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => ask('practitioner'))}
+          {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => ask('structure'))}
         </View>
 
 
@@ -183,16 +198,21 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
         {tab('person-outline', fr ? 'Compte' : 'Account', false, () => navigation.navigate('EmailLogin'))}
       </View>
 
-      <Modal visible={picking} animationType="slide" onRequestClose={() => setPicking(false)}>
+      <Modal visible={picking} animationType="slide" onRequestClose={close}>
         <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-          <Text style={[type.h2, styles.modalTitle]}>{t('welcome.country')}</Text>
+          {pending ? <Text style={styles.modalTag}>{t(`welcome.tile.${pending}`)}</Text> : null}
+          <Text style={[type.h2, styles.modalTitle, !!pending && styles.modalTitleTagged]}>
+            {pending === 'patient' ? t('search.country') : pending ? t('welcome.countryPro') : t('welcome.country')}
+          </Text>
           <FlatList
             data={countries}
             ListHeaderComponent={
+              pending ? null : (
               <Pressable accessibilityRole="button" onPress={() => choose(null)} style={[styles.row, country === null && styles.rowOn]}>
                 <Text style={type.body}>🌍 {t('common.allCountries')}</Text>
                 {country === null ? <Ionicons name="checkmark" size={20} color={colors.green} /> : null}
               </Pressable>
+              )
             }
             keyExtractor={(c) => c.code}
             renderItem={({ item }) => (
@@ -203,7 +223,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             )}
           />
           <View style={styles.modalFooter}>
-            <Button title={t('common.close')} variant="secondary" onPress={() => setPicking(false)} />
+            <Button title={t('common.close')} variant="secondary" onPress={close} />
           </View>
         </View>
       </Modal>
@@ -269,6 +289,8 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', gap: 2 },
   tabText: { fontSize: 11, color: colors.muted, fontWeight: '600' },
   tabTextOn: { color: colors.green },
+  modalTag: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, fontSize: 13, fontWeight: '800', color: colors.green, textTransform: 'uppercase' },
+  modalTitleTagged: { paddingTop: spacing.xs },
   modalTitle: { padding: spacing.xl, paddingBottom: spacing.md },
   row: {
     flexDirection: 'row',

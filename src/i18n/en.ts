@@ -604,4 +604,5 @@ export const en: Record<string, string> = {
   "offline.banner": "Offline: showing the last saved information. Booking resumes once you are back online.",
   "news.emergencyLink": "Medical emergency? Call for help",
   "login.proSignup": "Are you a health professional?",
+  "welcome.countryPro": "In which country do you practise?",
 };
