@@ -37,7 +37,7 @@ const TILES: Record<
 };
 
 /**
- * Ouverture, sans compte : l'emblème en haut à gauche (l'animation de démarrage l'y dépose), le pays et la langue ;
+ * Ouverture, sans compte : l'emblème en haut à gauche (l'animation de démarrage l'y dépose), le pays, la langue et la connexion ;
  * la barre de recherche (spécialités, symptômes, urgence, aide) ; trois profils qui présentent le service et mènent
  * à la connexion, puis les actualités santé à faire défiler.
  */
@@ -123,6 +123,15 @@ export default function WelcomeScreen({ navigation }: { navigation: any }) {
           <Ionicons name="chevron-down" size={14} color={colors.navy} />
         </Pressable>
         <LanguageSwitch compact />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('welcome.login')}
+          onPress={() => navigation.navigate('EmailLogin')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.login, pressed && styles.pressed]}
+        >
+          <Ionicons name="person-circle-outline" size={28} color={colors.green} />
+        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -260,6 +269,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.navy,
   },
+  login: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   scroll: { flexGrow: 1, paddingTop: spacing.lg, gap: spacing.lg },
   main: { gap: spacing.md, paddingHorizontal: spacing.xl },
   search: {
