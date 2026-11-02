@@ -203,6 +203,7 @@ export function RootNavigator() {
             {/* Sans compte : on découvre, on cherche un médecin et ses créneaux ; la connexion n'est demandée que pour réserver. */}
             <Stack.Screen name="ProInfo" component={ProInfoScreen} options={{ title: '' }} />
             <Stack.Screen name="Search" component={SearchScreen} options={{ title: t('search.title') }} />
+            <Stack.Screen name="News" component={NewsFeedScreen} options={{ title: t('search.news') }} />
             <Stack.Screen name="BookFacility" component={BookFacilityScreen} options={{ title: t('appt.book') }} />
             <Stack.Screen name="BookSpecialty" component={BookSpecialtyScreen} options={{ title: '' }} />
             <Stack.Screen name="BookAgenda" component={BookAgendaScreen} options={{ title: '' }} />

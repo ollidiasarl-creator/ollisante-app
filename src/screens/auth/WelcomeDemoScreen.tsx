@@ -1,10 +1,11 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getLocales } from 'expo-localization';
+import { useIsFocused } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getCountries, getNews } from '../../api/endpoints';
+import { getAppConfig, getCountries, getNews } from '../../api/endpoints';
 import type { Country, News } from '../../api/types';
 import { countryStore } from '../../auth/storage';
 import { BrandMark } from '../../components/Brand';
@@ -25,16 +26,18 @@ function greeting(lang: string): string {
 
 /**
  * Démo d'accueil (sans compte), organisée comme les applis de référence : un bandeau vert (pays, logo, connexion,
- * salutation, recherche), une carte d'actualité à cheval, « Prendre rendez-vous » en deux grandes cartes, l'accès
- * soignants, les actualités, et une barre d'onglets en bas. Les éléments sont ceux d'Ollisanté.
+ * salutation, recherche), une carte d'actualité à cheval, « Prendre rendez-vous » en deux grandes cartes, puis
+ * les actualités, et une barre d'onglets en bas (Accueil, Rendez-vous, Santé, WhatsApp, Compte).
  */
 export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const { t, lang } = useI18n();
   const insets = useSafeAreaInsets();
+  const focused = useIsFocused();
   const [countries, setCountries] = useState<Country[]>([]);
   const [country, setCountry] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [news, setNews] = useState<News[]>([]);
+  const [whatsapp, setWhatsapp] = useState<string | null>(null);
   const meta = useNewsMeta(countries);
   const name = (c: Country) => (lang === 'fr' ? c.nameFr : c.nameEn);
   const current = countries.find((c) => c.code === country);
@@ -53,6 +56,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     return () => {
       alive = false;
     };
+  }, []);
+
+  useEffect(() => {
+    getAppConfig()
+      .then((c) => setWhatsapp(c.whatsappNumber?.replace(/\D/g, '') || null))
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -92,8 +101,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
   return (
     <View style={styles.root}>
-      {/* Heure et batterie en blanc sur le bandeau vert. */}
-      <StatusBar style="light" />
+      {/* Heure et batterie en blanc sur le bandeau vert, de nouveau sombres sur les écrans suivants. */}
+      <StatusBar style={focused ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <View style={[styles.hero, { paddingTop: insets.top }]}>
           <View style={styles.bar}>
@@ -141,11 +150,6 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           {book('hospital-building', fr ? 'Une structure' : 'A facility', fr ? 'Clinique, hôpital, cabinet' : 'Clinic, hospital, practice', colors.gold, colors.navy, () => navigation.navigate('BookFacility', { countryCode: country }))}
         </View>
 
-        <View style={styles.proWrap}>
-          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('ProInfo', { profile: 'practitioner' })} style={({ pressed }) => [styles.pro, pressed && styles.pressed]}>
-            <Text style={styles.proText}>{fr ? 'Vous êtes soignant ou une structure ?' : 'Are you a health professional?'}</Text>
-          </Pressable>
-        </View>
 
         {others.length ? (
           <View style={styles.section}>
@@ -170,8 +174,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
       <View style={[styles.tabs, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
         {tab('home', fr ? 'Accueil' : 'Home', true)}
         {tab('calendar-outline', fr ? 'Rendez-vous' : 'Appointments', false, () => navigation.navigate('EmailLogin'))}
-        {tab('call-outline', fr ? 'Urgences' : 'Emergency', false, () => navigation.navigate('Emergency'))}
-        {tab('help-circle-outline', fr ? 'Aide' : 'Help', false, () => navigation.navigate('Faq'))}
+        {tab('heart-outline', fr ? 'Santé' : 'Health', false, () => navigation.navigate('News'))}
+        {whatsapp
+          ? tab('logo-whatsapp', 'WhatsApp', false, () =>
+              void Linking.openURL(`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('support.whatsappText'))}`),
+            )
+          : null}
         {tab('person-outline', fr ? 'Compte' : 'Account', false, () => navigation.navigate('EmailLogin'))}
       </View>
 
@@ -259,9 +267,6 @@ const styles = StyleSheet.create({
   bookTitle: { fontSize: 20, fontWeight: '800' },
   bookText: { marginTop: 2, fontSize: 14, opacity: 0.9 },
   bookArt: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
-  proWrap: { marginTop: spacing.xl, alignItems: 'center' },
-  pro: { paddingHorizontal: spacing.xl, minHeight: 48, justifyContent: 'center', borderRadius: radius.button, backgroundColor: colors.navy },
-  proText: { color: colors.white, fontSize: 15, fontWeight: '700' },
   rail: { gap: spacing.md, paddingRight: spacing.xl },
   newsCard: { width: 240, minHeight: 104, gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: '#F6F8F7' },
   newsTitle: { fontSize: 14, lineHeight: 19, fontWeight: '700', color: colors.navy },
