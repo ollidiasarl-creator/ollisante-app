@@ -14,5 +14,7 @@ export async function userCountry(): Promise<string | null> {
   } catch {
     // profil indisponible : on se rabat sur le choix de l'écran d'ouverture
   }
-  return countryStore.load();
+  const saved = await countryStore.load();
+  // « ALL » = « Tous les pays » choisi sur l'écran d'ouverture.
+  return saved === 'ALL' ? null : saved;
 }

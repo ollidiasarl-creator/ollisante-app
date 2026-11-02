@@ -17,6 +17,9 @@ import { colors, radius, spacing, type } from '../../theme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
+/** Valeur enregistrée pour « Tous les pays ». */
+const ALL = 'ALL';
+
 /** Drapeau d'un pays à partir de son code (FR → 🇫🇷). */
 const flagOf = (code: string) => String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 
@@ -54,6 +57,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
         if (!alive) return;
         setCountries(list);
         const region = getLocales()[0]?.regionCode ?? null;
+        // « Tous les pays » choisi la dernière fois : on le garde (sans revenir au pays du téléphone).
+        if (saved === ALL) return setCountry(null);
         setCountry([saved, region].find((code) => code && list.some((c) => c.code === code)) ?? null);
       })
       .catch(() => undefined);
@@ -78,10 +83,10 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     };
   }, [country]);
 
-  function choose(code: string) {
+  function choose(code: string | null) {
     setCountry(code);
     setPicking(false);
-    void countryStore.save(code);
+    void countryStore.save(code ?? ALL);
   }
 
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
@@ -117,7 +122,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
               onPress={() => setPicking(true)}
               style={({ pressed }) => [styles.country, pressed && styles.pressed]}
             >
-              <Text style={styles.countryText} numberOfLines={1}>{current ? `${flagOf(current.code)} ${name(current)}` : `🌍 ${t('common.allCountries')}`}</Text>
+              <Text style={styles.countryText} numberOfLines={1}>{current ? `${flagOf(current.code)} ${name(current)}` : `🌍 ${fr ? 'Tous pays' : 'All'}`}</Text>
               <Ionicons name="chevron-down" size={14} color={colors.white} />
             </Pressable>
             <View style={styles.flex} />
@@ -183,6 +188,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           <Text style={[type.h2, styles.modalTitle]}>{t('welcome.country')}</Text>
           <FlatList
             data={countries}
+            ListHeaderComponent={
+              <Pressable accessibilityRole="button" onPress={() => choose(null)} style={[styles.row, country === null && styles.rowOn]}>
+                <Text style={type.body}>🌍 {t('common.allCountries')}</Text>
+                {country === null ? <Ionicons name="checkmark" size={20} color={colors.green} /> : null}
+              </Pressable>
+            }
             keyExtractor={(c) => c.code}
             renderItem={({ item }) => (
               <Pressable accessibilityRole="button" onPress={() => choose(item.code)} style={[styles.row, item.code === country && styles.rowOn]}>
@@ -216,7 +227,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    maxWidth: 150,
+    maxWidth: 170,
     paddingHorizontal: spacing.md,
     minHeight: 32,
     borderRadius: radius.pill,
