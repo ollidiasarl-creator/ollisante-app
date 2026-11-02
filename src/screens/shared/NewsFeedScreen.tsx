@@ -1,7 +1,6 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { getCountries, getNews } from '../../api/endpoints';
 import type { Country, News } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
@@ -89,18 +88,6 @@ export default function NewsFeedScreen({ navigation }: { navigation: any }) {
 
   const header = (
     <View style={styles.header}>
-      {/* Urgence toujours à portée : la barre du bas de l'accueil n'a plus d'onglet dédié. */}
-      {isAdmin ? null : (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.navigate('Emergency')}
-          style={({ pressed }) => [styles.urgent, pressed && { opacity: 0.85 }]}
-        >
-          <Ionicons name="call" size={18} color={colors.orange} />
-          <Text style={styles.urgentText}>{t('news.emergencyLink')}</Text>
-          <Ionicons name="chevron-forward" size={18} color={colors.orange} />
-        </Pressable>
-      )}
       {isAdmin ? <Button title={t('news.publish')} onPress={() => navigation.navigate('PublishNews')} /> : null}
       {/* Hors administrateur, les actualités sont celles du pays du compte : pas de choix de pays. */}
       {isAdmin || !accountCountry ? (
@@ -148,18 +135,6 @@ export default function NewsFeedScreen({ navigation }: { navigation: any }) {
 }
 
 const styles = StyleSheet.create({
-  urgent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: 48,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.orange,
-    backgroundColor: colors.orangeSoft,
-  },
-  urgentText: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.orange },
   list: { backgroundColor: colors.white },
   content: { padding: PADDING, gap: spacing.xs },
   header: { gap: spacing.md, marginBottom: spacing.sm },
