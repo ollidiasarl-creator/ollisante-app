@@ -21,6 +21,7 @@ import PractitionerRegisterScreen from '../screens/auth/PractitionerRegisterScre
 import ProInfoScreen from '../screens/auth/ProInfoScreen';
 import StructureRegisterScreen from '../screens/auth/StructureRegisterScreen';
 import WelcomeScreen from '../screens/auth/WelcomeScreen';
+import WelcomeDemoScreen from '../screens/auth/WelcomeDemoScreen';
 import AdminPractitionersScreen from '../screens/admin/AdminPractitionersScreen';
 import PublishNewsScreen from '../screens/admin/PublishNewsScreen';
 import BookAgendaScreen from '../screens/patient/BookAgendaScreen';
@@ -50,6 +51,9 @@ import SearchScreen from '../screens/shared/SearchScreen';
 import ProfileEditScreen from '../screens/shared/ProfileEditScreen';
 import StructureDoctorsScreen from '../screens/structure/StructureDoctorsScreen';
 import StructureHomeScreen from '../screens/structure/StructureHomeScreen';
+
+/** Démo du nouvel accueil (inspiré des applis de référence) : à valider avant toute publication. */
+const WELCOME_DEMO = true;
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -185,7 +189,7 @@ export function RootNavigator() {
       <Stack.Navigator screenOptions={stackOptions}>
         {status === 'signedOut' ? (
           <>
-            <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
+            <Stack.Screen name="Welcome" component={WELCOME_DEMO ? WelcomeDemoScreen : WelcomeScreen} options={{ headerShown: false }} />
             <Stack.Screen name="PhoneLogin" component={PhoneLoginScreen} options={{ title: '' }} />
             <Stack.Screen name="OtpVerify" component={OtpVerifyScreen} options={{ title: '' }} />
             <Stack.Screen name="EmailLogin" component={EmailLoginScreen} options={{ title: '' }} />
