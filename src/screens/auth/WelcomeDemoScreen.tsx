@@ -88,7 +88,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
         <Text style={[styles.bookText, { color: fg }]}>{text}</Text>
       </View>
       <View style={styles.bookArt}>
-        <MaterialCommunityIcons name={icon} size={46} color={fg} />
+        <MaterialCommunityIcons name={icon} size={26} color={fg} />
       </View>
     </Pressable>
   );
@@ -136,16 +136,16 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           <Pressable accessibilityRole="button" onPress={() => navigation.navigate('NewsDetail', { news: headline, countries })} style={({ pressed }) => [styles.feature, pressed && styles.pressed]}>
             <View style={styles.flex}>
               <Text style={styles.featureMeta}>{meta(headline)}</Text>
-              <Text style={styles.featureTitle} numberOfLines={3}>{headline.title}</Text>
+              <Text style={styles.featureTitle} numberOfLines={2}>{headline.title}</Text>
             </View>
             <View style={styles.featureArt}>
-              <MaterialCommunityIcons name="newspaper-variant-outline" size={34} color={colors.green} />
+              <MaterialCommunityIcons name="newspaper-variant-outline" size={22} color={colors.green} />
             </View>
           </Pressable>
         ) : <View style={styles.featureGap} />}
 
         <View style={styles.section}>
-          <Text style={type.h2}>{fr ? 'Prendre rendez-vous' : 'Book an appointment'}</Text>
+          <Text style={styles.sectionTitle}>{fr ? 'Prendre rendez-vous' : 'Book an appointment'}</Text>
           {book('stethoscope', fr ? 'Un médecin' : 'A doctor', fr ? 'Généraliste ou spécialiste' : 'GP or specialist', colors.green, colors.white, () => navigation.navigate('BookFacility', { countryCode: country }))}
           {book('hospital-building', fr ? 'Une structure' : 'A facility', fr ? 'Clinique, hôpital, cabinet' : 'Clinic, hospital, practice', colors.gold, colors.navy, () => navigation.navigate('BookFacility', { countryCode: country }))}
         </View>
@@ -153,7 +153,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
         {others.length ? (
           <View style={styles.section}>
-            <Text style={type.h2}>{fr ? 'À la une' : 'Trending now'}</Text>
+            <Text style={styles.sectionTitle}>{fr ? 'À la une' : 'Trending now'}</Text>
             <FlatList
               horizontal
               data={others}
@@ -175,11 +175,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
         {tab('home', fr ? 'Accueil' : 'Home', true)}
         {tab('calendar-outline', fr ? 'Rendez-vous' : 'Appointments', false, () => navigation.navigate('EmailLogin'))}
         {tab('heart-outline', fr ? 'Santé' : 'Health', false, () => navigation.navigate('News'))}
-        {whatsapp
-          ? tab('logo-whatsapp', 'WhatsApp', false, () =>
-              void Linking.openURL(`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('support.whatsappText'))}`),
-            )
-          : null}
+        {/* Sans numéro WhatsApp enregistré dans l'administration, l'onglet ouvre l'aide. */}
+        {tab('logo-whatsapp', 'WhatsApp', false, () =>
+          whatsapp
+            ? void Linking.openURL(`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('support.whatsappText'))}`)
+            : navigation.navigate('Faq'),
+        )}
         {tab('person-outline', fr ? 'Compte' : 'Account', false, () => navigation.navigate('EmailLogin'))}
       </View>
 
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: colors.green,
     paddingHorizontal: spacing.xl,
-    paddingBottom: 64,
+    paddingBottom: 48,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
@@ -229,27 +230,28 @@ const styles = StyleSheet.create({
   },
   countryText: { flexShrink: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
   login: { color: colors.white, fontSize: 15, fontWeight: '700' },
-  hello: { marginTop: spacing.lg, color: 'rgba(255, 255, 255, 0.85)', fontSize: 17, fontWeight: '600' },
-  slogan: { color: colors.white, fontSize: 30, lineHeight: 36, fontWeight: '800' },
+  hello: { marginTop: spacing.md, color: 'rgba(255, 255, 255, 0.85)', fontSize: 15, fontWeight: '600' },
+  slogan: { color: colors.white, fontSize: 24, lineHeight: 30, fontWeight: '800' },
   sloganAccent: { color: colors.gold },
   search: {
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 52,
+    minHeight: 46,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
     backgroundColor: colors.white,
   },
   searchText: { flex: 1, fontSize: 16, color: colors.muted },
   feature: {
-    marginTop: -40,
+    marginTop: -30,
     marginHorizontal: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
     borderRadius: radius.card,
     backgroundColor: colors.white,
     shadowColor: '#0F2A47',
@@ -260,13 +262,14 @@ const styles = StyleSheet.create({
   },
   featureGap: { height: spacing.sm },
   featureMeta: { fontSize: 12, fontWeight: '700', color: colors.green },
-  featureTitle: { marginTop: 4, fontSize: 16, lineHeight: 21, fontWeight: '700', color: colors.navy },
-  featureArt: { width: 64, height: 64, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
-  section: { marginTop: spacing.xl, paddingHorizontal: spacing.xl, gap: spacing.md },
-  bookCard: { flexDirection: 'row', alignItems: 'center', minHeight: 104, paddingHorizontal: spacing.xl, borderRadius: 18 },
-  bookTitle: { fontSize: 20, fontWeight: '800' },
-  bookText: { marginTop: 2, fontSize: 14, opacity: 0.9 },
-  bookArt: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
+  featureTitle: { marginTop: 2, fontSize: 14, lineHeight: 19, fontWeight: '700', color: colors.navy },
+  featureArt: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
+  sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
+  section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
+  bookCard: { flexDirection: 'row', alignItems: 'center', minHeight: 72, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: 14 },
+  bookTitle: { fontSize: 17, fontWeight: '800' },
+  bookText: { marginTop: 1, fontSize: 13, opacity: 0.9 },
+  bookArt: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
   rail: { gap: spacing.md, paddingRight: spacing.xl },
   newsCard: { width: 240, minHeight: 104, gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: '#F6F8F7' },
   newsTitle: { fontSize: 14, lineHeight: 19, fontWeight: '700', color: colors.navy },
