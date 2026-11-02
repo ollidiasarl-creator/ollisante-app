@@ -602,4 +602,6 @@ export const en: Record<string, string> = {
   "search.pickSpecialty": "Choose a specialty",
   "search.topics": "Topics",
   "offline.banner": "Offline: showing the last saved information. Booking resumes once you are back online.",
+  "news.emergencyLink": "Medical emergency? Call for help",
+  "login.proSignup": "Are you a health professional?",
 };

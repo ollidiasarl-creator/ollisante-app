@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { isLoginChallenge, loginWithPassword } from '../../api/endpoints';
 import { useAuth } from '../../auth/AuthContext';
 import { Banner, Button, Screen, TextField } from '../../components/ui';
@@ -80,6 +80,18 @@ export default function EmailLoginScreen({ route, navigation }: { route: any; na
         variant="ghost"
         onPress={() => navigation.navigate(registerRoute(profile))}
       />
+      {/* Connexion ouverte sans profil (accueil) : les professionnels peuvent aussi s'inscrire d'ici. */}
+      {generic ? (
+        <>
+          <Text style={[type.small, styles.proTitle]}>{t('login.proSignup')}</Text>
+          <Button title={t('welcome.register.practitioner')} variant="ghost" onPress={() => navigation.navigate('PractitionerRegister')} />
+          <Button title={t('welcome.register.structure')} variant="ghost" onPress={() => navigation.navigate('StructureRegister')} />
+        </>
+      ) : null}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  proTitle: { marginTop: 16, textAlign: 'center' },
+});
