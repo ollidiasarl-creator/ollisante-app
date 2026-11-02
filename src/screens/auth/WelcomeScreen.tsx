@@ -37,9 +37,9 @@ const TILES: Record<
 };
 
 /**
- * Ouverture, sans compte : l'emblème en haut à gauche (l'animation de démarrage l'y dépose), le pays, la langue et
- * « Se connecter » ; la recherche d'un médecin, les urgences et l'aide ; trois profils qui présentent le service
- * (sans mener d'emblée à la connexion), puis les actualités santé à faire défiler.
+ * Ouverture, sans compte : l'emblème en haut à gauche (l'animation de démarrage l'y dépose), le pays et la langue ;
+ * la barre de recherche (spécialités, symptômes, urgence, aide) ; trois profils qui présentent le service et mènent
+ * à la connexion, puis les actualités santé à faire défiler.
  */
 export default function WelcomeScreen({ navigation }: { navigation: any }) {
   const { t, lang } = useI18n();
@@ -127,8 +127,6 @@ export default function WelcomeScreen({ navigation }: { navigation: any }) {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.main}>
-          <Text style={styles.hero}>{t('welcome.hero')}</Text>
-          <Text style={styles.lead}>{t('welcome.lead')}</Text>
           <Pressable
             accessibilityRole="search"
             onPress={() => navigation.navigate('Search')}
@@ -139,33 +137,6 @@ export default function WelcomeScreen({ navigation }: { navigation: any }) {
               {t('welcome.search')}
             </Text>
           </Pressable>
-          <View style={styles.quick}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => navigation.navigate('Emergency')}
-              style={({ pressed }) => [styles.chip, styles.chipUrgent, pressed && styles.pressed]}
-            >
-              <Ionicons name="call" size={16} color={colors.orange} />
-              <Text style={[styles.chipText, { color: colors.orange }]}>{t('welcome.emergency')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => navigation.navigate('Faq')}
-              style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
-            >
-              <Ionicons name="help-circle-outline" size={17} color={colors.navy} />
-              <Text style={styles.chipText}>{t('welcome.help')}</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => navigation.navigate('EmailLogin')}
-              style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
-            >
-              <Ionicons name="log-in-outline" size={17} color={colors.navy} />
-              <Text style={styles.chipText}>{t('welcome.login')}</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.iam}>{t('welcome.iam')}</Text>
           {PROFILES.map((p) => (
             <Pressable
               key={p}
@@ -180,13 +151,13 @@ export default function WelcomeScreen({ navigation }: { navigation: any }) {
               style={({ pressed }) => [styles.tile, { backgroundColor: TILES[p].bg }, pressed && styles.tilePressed]}
             >
               <View style={[styles.tileIcon, p === 'structure' && styles.tileIconLight]}>
-                <MaterialCommunityIcons name={TILES[p].icon} size={28} color={TILES[p].fg} />
+                <MaterialCommunityIcons name={TILES[p].icon} size={22} color={TILES[p].fg} />
               </View>
               <View style={styles.flex}>
                 <Text style={[styles.tileTitle, { color: TILES[p].fg }]}>{t(`welcome.tile.${p}`)}</Text>
                 <Text style={[styles.tileText, { color: TILES[p].fg }]}>{t(`welcome.tile.${p}.text`)}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={22} color={TILES[p].fg} />
+              <Ionicons name="chevron-forward" size={18} color={TILES[p].fg} />
             </Pressable>
           ))}
         </View>
@@ -291,13 +262,6 @@ const styles = StyleSheet.create({
   },
   scroll: { flexGrow: 1, paddingTop: spacing.lg, gap: spacing.lg },
   main: { gap: spacing.md, paddingHorizontal: spacing.xl },
-  hero: { fontSize: 28, lineHeight: 34, fontWeight: '800', color: colors.navy },
-  lead: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: colors.muted,
-    marginTop: -spacing.xs,
-  },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -310,43 +274,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F8F7',
   },
   searchText: { flex: 1, fontSize: 16, color: colors.muted },
-  quick: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 38,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  chipUrgent: {
-    borderColor: colors.orange,
-    backgroundColor: colors.orangeSoft,
-  },
-  chipText: { fontSize: 14, fontWeight: '700', color: colors.navy },
-  iam: { ...type.h2, marginTop: spacing.sm, marginBottom: spacing.xs },
   tile: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-    minHeight: 88,
-    paddingHorizontal: spacing.xl,
-    borderRadius: 22,
+    minHeight: 64,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 16,
   },
   tilePressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
   tileIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   tileIconLight: { backgroundColor: 'rgba(255, 255, 255, 0.35)' },
-  tileTitle: { fontSize: 20, fontWeight: '800' },
-  tileText: { fontSize: 14, marginTop: 2 },
+  tileTitle: { fontSize: 17, fontWeight: '800' },
+  tileText: { fontSize: 13, marginTop: 1 },
   news: { paddingBottom: spacing.md, gap: spacing.sm },
   newsTitle: {
     ...type.label,
