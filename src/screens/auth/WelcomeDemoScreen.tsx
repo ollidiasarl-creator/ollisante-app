@@ -9,12 +9,16 @@ import { getAppConfig, getCountries, getNews } from '../../api/endpoints';
 import type { Country, News } from '../../api/types';
 import { countryStore } from '../../auth/storage';
 import { BrandMark } from '../../components/Brand';
+import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+/** Drapeau d'un pays à partir de son code (FR → 🇫🇷). */
+const flagOf = (code: string) => String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
 
 /** Salutation selon l'heure, comme dans les grandes applis de rendez-vous. */
 function greeting(lang: string): string {
@@ -25,9 +29,9 @@ function greeting(lang: string): string {
 }
 
 /**
- * Démo d'accueil (sans compte), organisée comme les applis de référence : un bandeau vert (pays, logo, connexion,
- * salutation, recherche), une carte d'actualité à cheval, « Prendre rendez-vous » en deux grandes cartes, puis
- * les actualités, et une barre d'onglets en bas (Accueil, Rendez-vous, Santé, WhatsApp, Compte).
+ * Accueil sans compte, organisé comme les applis de référence : un bandeau vert (logo, pays, langue, connexion,
+ * salutation, recherche), les trois profils en blocs compacts (Patient, Médecin, Structure), les actualités en
+ * dessous, et une barre d'onglets en bas (Accueil, Rendez-vous, Santé, WhatsApp, Compte).
  */
 export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const { t, lang } = useI18n();
@@ -80,16 +84,16 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     void countryStore.save(code);
   }
 
-  const [headline, ...others] = news;
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
+      <View style={styles.bookArt}>
+        <MaterialCommunityIcons name={icon} size={20} color={fg} />
+      </View>
       <View style={styles.flex}>
         <Text style={[styles.bookTitle, { color: fg }]}>{title}</Text>
-        <Text style={[styles.bookText, { color: fg }]}>{text}</Text>
+        <Text style={[styles.bookText, { color: fg }]} numberOfLines={1}>{text}</Text>
       </View>
-      <View style={styles.bookArt}>
-        <MaterialCommunityIcons name={icon} size={26} color={fg} />
-      </View>
+      <Ionicons name="chevron-forward" size={18} color={fg} />
     </Pressable>
   );
   const tab = (icon: React.ComponentProps<typeof Ionicons>['name'], label: string, active: boolean, onPress?: () => void) => (
@@ -113,12 +117,13 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
               onPress={() => setPicking(true)}
               style={({ pressed }) => [styles.country, pressed && styles.pressed]}
             >
-              <Text style={styles.countryText} numberOfLines={1}>{current ? name(current) : t('common.allCountries')}</Text>
+              <Text style={styles.countryText} numberOfLines={1}>{current ? `${flagOf(current.code)} ${name(current)}` : `🌍 ${t('common.allCountries')}`}</Text>
               <Ionicons name="chevron-down" size={14} color={colors.white} />
             </Pressable>
             <View style={styles.flex} />
-            <Pressable accessibilityRole="button" onPress={() => navigation.navigate('EmailLogin')} hitSlop={8}>
-              <Text style={styles.login}>{t('welcome.login')}</Text>
+            <LanguageSwitch compact />
+            <Pressable accessibilityRole="button" accessibilityLabel={t('welcome.login')} onPress={() => navigation.navigate('EmailLogin')} hitSlop={8}>
+              <Ionicons name="person-circle-outline" size={30} color={colors.white} />
             </Pressable>
           </View>
           <Text style={styles.hello}>{greeting(lang)},</Text>
@@ -132,31 +137,20 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           </Pressable>
         </View>
 
-        {headline ? (
-          <Pressable accessibilityRole="button" onPress={() => navigation.navigate('NewsDetail', { news: headline, countries })} style={({ pressed }) => [styles.feature, pressed && styles.pressed]}>
-            <View style={styles.flex}>
-              <Text style={styles.featureMeta}>{meta(headline)}</Text>
-              <Text style={styles.featureTitle} numberOfLines={2}>{headline.title}</Text>
-            </View>
-            <View style={styles.featureArt}>
-              <MaterialCommunityIcons name="newspaper-variant-outline" size={22} color={colors.green} />
-            </View>
-          </Pressable>
-        ) : <View style={styles.featureGap} />}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{fr ? 'Prendre rendez-vous' : 'Book an appointment'}</Text>
-          {book('stethoscope', fr ? 'Un médecin' : 'A doctor', fr ? 'Généraliste ou spécialiste' : 'GP or specialist', colors.green, colors.white, () => navigation.navigate('BookFacility', { countryCode: country }))}
-          {book('hospital-building', fr ? 'Une structure' : 'A facility', fr ? 'Clinique, hôpital, cabinet' : 'Clinic, hospital, practice', colors.gold, colors.navy, () => navigation.navigate('BookFacility', { countryCode: country }))}
+        <View style={[styles.section, styles.first]}>
+          {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => navigation.navigate('BookFacility', { countryCode: country }))}
+          {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => navigation.navigate('ProInfo', { profile: 'practitioner' }))}
+          {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => navigation.navigate('ProInfo', { profile: 'structure' }))}
         </View>
 
 
-        {others.length ? (
+        {news.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{fr ? 'À la une' : 'Trending now'}</Text>
             <FlatList
               horizontal
-              data={others}
+              data={news}
               keyExtractor={(n) => n.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rail}
@@ -213,7 +207,7 @@ const styles = StyleSheet.create({
   hero: {
     backgroundColor: colors.green,
     paddingHorizontal: spacing.xl,
-    paddingBottom: 48,
+    paddingBottom: spacing.xl,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
@@ -229,7 +223,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   countryText: { flexShrink: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
-  login: { color: colors.white, fontSize: 15, fontWeight: '700' },
   hello: { marginTop: spacing.md, color: 'rgba(255, 255, 255, 0.85)', fontSize: 15, fontWeight: '600' },
   slogan: { color: colors.white, fontSize: 24, lineHeight: 30, fontWeight: '800' },
   sloganAccent: { color: colors.gold },
@@ -244,34 +237,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   searchText: { flex: 1, fontSize: 16, color: colors.muted },
-  feature: {
-    marginTop: -30,
-    marginHorizontal: spacing.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.card,
-    backgroundColor: colors.white,
-    shadowColor: '#0F2A47',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
-  },
-  featureGap: { height: spacing.sm },
   featureMeta: { fontSize: 12, fontWeight: '700', color: colors.green },
-  featureTitle: { marginTop: 2, fontSize: 14, lineHeight: 19, fontWeight: '700', color: colors.navy },
-  featureArt: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
+  first: { marginTop: spacing.lg },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
-  bookCard: { flexDirection: 'row', alignItems: 'center', minHeight: 72, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: 14 },
-  bookTitle: { fontSize: 17, fontWeight: '800' },
-  bookText: { marginTop: 1, fontSize: 13, opacity: 0.9 },
-  bookArt: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
+  bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 56, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: 12 },
+  bookTitle: { fontSize: 15, fontWeight: '800' },
+  bookText: { fontSize: 12, opacity: 0.9 },
+  bookArt: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
   rail: { gap: spacing.md, paddingRight: spacing.xl },
-  newsCard: { width: 240, minHeight: 104, gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: '#F6F8F7' },
+  newsCard: { width: 230, minHeight: 84, gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: '#F6F8F7' },
   newsTitle: { fontSize: 14, lineHeight: 19, fontWeight: '700', color: colors.navy },
   tabs: {
     flexDirection: 'row',
