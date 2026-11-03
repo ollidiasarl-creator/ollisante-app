@@ -605,4 +605,6 @@ export const en: Record<string, string> = {
   "news.emergencyLink": "Medical emergency? Call for help",
   "login.proSignup": "Are you a health professional?",
   "welcome.countryPro": "In which country do you practise?",
+  "common.continue": "Continue",
+  "common.cancel": "Cancel",
 };

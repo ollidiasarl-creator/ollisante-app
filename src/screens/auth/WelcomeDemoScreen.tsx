@@ -95,9 +95,13 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     if (next === 'patient') navigation.navigate('BookFacility', { countryCode: code });
     else navigation.navigate('ProInfo', { profile: next });
   }
+  const [gateCode, setGateCode] = useState<string | null>(null);
+  const [gateOpen, setGateOpen] = useState(false);
+  const gateCountry = countries.find((c) => c.code === gateCode);
   const ask = (profile: 'patient' | 'practitioner' | 'structure') => {
+    setGateCode(country);
+    setGateOpen(false);
     setPending(profile);
-    setPicking(true);
   };
   const close = () => {
     setPicking(false);
@@ -198,16 +202,53 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
         {tab('person-outline', fr ? 'Compte' : 'Account', false, () => navigation.navigate('EmailLogin'))}
       </View>
 
+      <Modal visible={!!pending} transparent animationType="fade" onRequestClose={close}>
+        <View style={styles.gateBackdrop}>
+          <View style={styles.gateCard}>
+            {pending ? <Text style={styles.gateTag}>{t(`welcome.tile.${pending}`)}</Text> : null}
+            <Text style={type.h2}>{pending === 'patient' ? t('search.country') : t('welcome.countryPro')}</Text>
+            {/* Liste déroulante dans la fenêtre (une seconde fenêtre ne s'ouvrirait pas par-dessus sur iPhone). */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('welcome.country')}
+              onPress={() => setGateOpen((o) => !o)}
+              style={[styles.select, gateOpen && styles.selectOpen]}
+            >
+              <Text style={[type.body, styles.flex, !gateCode && { color: colors.muted }]} numberOfLines={1}>
+                {gateCountry ? `${flagOf(gateCountry.code)} ${name(gateCountry)}` : t('welcome.country')}
+              </Text>
+              <Ionicons name={gateOpen ? 'chevron-up' : 'chevron-down'} size={18} color={colors.navy} />
+            </Pressable>
+            {gateOpen ? (
+              <ScrollView style={styles.dropdown} nestedScrollEnabled>
+                {countries.map((c) => (
+                  <Pressable
+                    key={c.code}
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setGateCode(c.code);
+                      setGateOpen(false);
+                    }}
+                    style={[styles.option, c.code === gateCode && styles.rowOn]}
+                  >
+                    <Text style={type.body}>{flagOf(c.code)} {name(c)}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : null}
+            <Button title={t('common.continue')} disabled={!gateCode} onPress={() => gateCode && choose(gateCode)} />
+            <Button title={t('common.cancel')} variant="ghost" onPress={close} />
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={picking} animationType="slide" onRequestClose={close}>
         <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-          {pending ? <Text style={styles.modalTag}>{t(`welcome.tile.${pending}`)}</Text> : null}
-          <Text style={[type.h2, styles.modalTitle, !!pending && styles.modalTitleTagged]}>
-            {pending === 'patient' ? t('search.country') : pending ? t('welcome.countryPro') : t('welcome.country')}
-          </Text>
+          <Text style={[type.h2, styles.modalTitle]}>{t('welcome.country')}</Text>
           <FlatList
             data={countries}
             ListHeaderComponent={
-              pending ? null : (
+              (
               <Pressable accessibilityRole="button" onPress={() => choose(null)} style={[styles.row, country === null && styles.rowOn]}>
                 <Text style={type.body}>🌍 {t('common.allCountries')}</Text>
                 {country === null ? <Ionicons name="checkmark" size={20} color={colors.green} /> : null}
@@ -289,8 +330,22 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', gap: 2 },
   tabText: { fontSize: 11, color: colors.muted, fontWeight: '600' },
   tabTextOn: { color: colors.green },
-  modalTag: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, fontSize: 13, fontWeight: '800', color: colors.green, textTransform: 'uppercase' },
-  modalTitleTagged: { paddingTop: spacing.xs },
+  gateBackdrop: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: 'rgba(15, 42, 71, 0.45)' },
+  gateCard: { gap: spacing.md, padding: spacing.xl, borderRadius: 18, backgroundColor: colors.white },
+  select: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 50,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.input,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  selectOpen: { borderColor: colors.green },
+  dropdown: { maxHeight: 240, borderRadius: radius.input, borderWidth: 1, borderColor: colors.border, marginTop: -spacing.sm },
+  option: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  gateTag: { fontSize: 13, fontWeight: '800', color: colors.green, textTransform: 'uppercase' },
   modalTitle: { padding: spacing.xl, paddingBottom: spacing.md },
   row: {
     flexDirection: 'row',

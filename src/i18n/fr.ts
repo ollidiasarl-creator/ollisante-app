@@ -605,4 +605,6 @@ export const fr: Record<string, string> = {
   "news.emergencyLink": "Urgence médicale ? Appeler les secours",
   "login.proSignup": "Vous êtes professionnel de santé ?",
   "welcome.countryPro": "Dans quel pays exercez-vous ?",
+  "common.continue": "Continuer",
+  "common.cancel": "Annuler",
 };
