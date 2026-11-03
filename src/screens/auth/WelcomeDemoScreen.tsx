@@ -331,18 +331,6 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           </View>
         ) : null}
 
-        <View style={[styles.section, styles.trust]}>
-          {([
-            ['shield-checkmark-outline', fr ? 'Médecins vérifiés' : 'Verified doctors'],
-            ['time-outline', fr ? 'Réservation 24 h/24' : 'Book 24/7'],
-            ['notifications-outline', fr ? 'Rappel avant le RDV' : 'Appointment reminder'],
-          ] as const).map(([icon, label]) => (
-            <View key={label} style={styles.trustItem}>
-              <Ionicons name={icon} size={20} color={colors.green} />
-              <Text style={styles.trustText}>{label}</Text>
-            </View>
-          ))}
-        </View>
           </>
         )}
       </ScrollView>
@@ -492,9 +480,6 @@ const styles = StyleSheet.create({
   spec: { width: 84, alignItems: 'center', gap: 6 },
   specIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
   specName: { fontSize: 12, lineHeight: 15, fontWeight: '600', color: colors.navy, textAlign: 'center' },
-  trust: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl },
-  trustItem: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: spacing.md, borderRadius: 12, backgroundColor: '#F6F8F7' },
-  trustText: { fontSize: 11, lineHeight: 14, fontWeight: '700', color: colors.navy, textAlign: 'center' },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
   bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 46, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: 10 },
   bookTitle: { fontSize: 14, fontWeight: '800' },
