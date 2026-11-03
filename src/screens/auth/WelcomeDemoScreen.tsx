@@ -5,8 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getAppConfig, getCountries, getNews } from '../../api/endpoints';
-import type { Country, News } from '../../api/types';
+import { getAppConfig, getCountries, getNews, getSpecialties } from '../../api/endpoints';
+import type { Country, News, Specialty } from '../../api/types';
+import { frequentSpecialties } from '../../lib/search';
 import { countryStore } from '../../auth/storage';
 import { BrandMark } from '../../components/Brand';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
@@ -21,6 +22,12 @@ type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 /** Cartes d'actualités : largeur fixe pour défiler carte par carte. */
 const CARD_W = 260;
 const CARD_GAP = 12;
+
+/** Pictogramme de chaque spécialité (mêmes icônes que l'écran de choix de spécialité). */
+const SPEC_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
+  GENERAL_PRACTICE: 'medkit', PEDIATRICS: 'happy', GYNECOLOGY: 'female', CARDIOLOGY: 'heart', DERMATOLOGY: 'hand-left',
+  OPHTHALMOLOGY: 'eye', DENTISTRY: 'medical', ENT: 'ear', PSYCHIATRY: 'chatbubbles', NEUROLOGY: 'pulse',
+};
 
 /** Valeur enregistrée pour « Tous les pays ». */
 const ALL = 'ALL';
@@ -63,6 +70,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   // Bloc touché (Patient, Médecin, Structure) : le pays est demandé d'abord, comme sur le site, puis on continue.
   const [pending, setPending] = useState<'patient' | 'practitioner' | 'structure' | null>(null);
   const [news, setNews] = useState<News[]>([]);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const specName = (x: Specialty) => (lang === 'fr' ? x.nameFr : x.nameEn);
   const [whatsapp, setWhatsapp] = useState<string | null>(null);
   const meta = useNewsMeta(countries);
   const name = (c: Country) => (lang === 'fr' ? c.nameFr : c.nameEn);
@@ -84,6 +93,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     return () => {
       alive = false;
     };
+  }, []);
+
+  useEffect(() => {
+    getSpecialties()
+      .then((l) => setSpecialties(frequentSpecialties(l)))
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -124,6 +139,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     const next = pending;
     if (!next || !code) return setPending(null);
     // Patient : second choix dans la même fenêtre (un médecin ou une structure), comme sur le site.
+    if (next === 'patient' && pickSpec) {
+      const c = countries.find((x) => x.code === code);
+      const s = pickSpec;
+      close();
+      return navigation.navigate('BookAgenda', { countryCode: code, specialty: s, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
+    }
     if (next === 'patient') return setGateStep('choice');
     setPending(null);
     navigation.navigate('ProInfo', { profile: next });
@@ -132,7 +153,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const [gateOpen, setGateOpen] = useState(false);
   const [gateStep, setGateStep] = useState<'country' | 'choice'>('country');
   const gateCountry = countries.find((c) => c.code === gateCode);
-  const ask = (profile: 'patient' | 'practitioner' | 'structure') => {
+  const [pickSpec, setPickSpec] = useState<Specialty | null>(null);
+  const ask = (profile: 'patient' | 'practitioner' | 'structure', spec: Specialty | null = null) => {
+    setPickSpec(spec);
     setGateCode(country);
     setGateOpen(false);
     setGateStep('country');
@@ -141,6 +164,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const close = () => {
     setPicking(false);
     setPending(null);
+    setPickSpec(null);
     setGateStep('country');
   };
   const consult = (what: 'doctor' | 'facility') => {
@@ -290,6 +314,35 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             ) : null}
           </View>
         ) : null}
+
+        {specialties.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{fr ? 'Spécialités fréquentes' : 'Popular specialties'}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.specRail}>
+              {specialties.map((x) => (
+                <Pressable key={x.code} accessibilityRole="button" onPress={() => ask('patient', x)} style={({ pressed }) => [styles.spec, pressed && styles.pressed]}>
+                  <View style={styles.specIcon}>
+                    <Ionicons name={SPEC_ICONS[x.code] ?? 'medical'} size={20} color={colors.green} />
+                  </View>
+                  <Text style={styles.specName} numberOfLines={2}>{specName(x)}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
+        <View style={[styles.section, styles.trust]}>
+          {([
+            ['shield-checkmark-outline', fr ? 'Médecins vérifiés' : 'Verified doctors'],
+            ['time-outline', fr ? 'Réservation 24 h/24' : 'Book 24/7'],
+            ['notifications-outline', fr ? 'Rappel avant le RDV' : 'Appointment reminder'],
+          ] as const).map(([icon, label]) => (
+            <View key={label} style={styles.trustItem}>
+              <Ionicons name={icon} size={20} color={colors.green} />
+              <Text style={styles.trustText}>{label}</Text>
+            </View>
+          ))}
+        </View>
           </>
         )}
       </ScrollView>
@@ -326,7 +379,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             </View>
           ) : (
           <View style={styles.gateCard}>
-            {pending ? <Text style={styles.gateTag}>{t(`welcome.tile.${pending}`)}</Text> : null}
+            {pending ? <Text style={styles.gateTag}>{pickSpec ? specName(pickSpec) : t(`welcome.tile.${pending}`)}</Text> : null}
             <Text style={type.h2}>{pending === 'patient' ? t('search.country') : t('welcome.countryPro')}</Text>
             {/* Liste déroulante dans la fenêtre (une seconde fenêtre ne s'ouvrirait pas par-dessus sur iPhone). */}
             <Pressable
@@ -417,8 +470,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   countryText: { flexShrink: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
-  hello: { marginTop: spacing.md, color: 'rgba(255, 255, 255, 0.85)', fontSize: 15, fontWeight: '600' },
-  slogan: { color: colors.white, fontSize: 24, lineHeight: 30, fontWeight: '800' },
+  hello: { marginTop: spacing.sm, color: 'rgba(255, 255, 255, 0.85)', fontSize: 14, fontWeight: '600' },
+  slogan: { color: colors.white, fontSize: 22, lineHeight: 28, fontWeight: '800' },
   sloganAccent: { color: colors.gold },
   search: {
     flexDirection: 'row',
@@ -435,6 +488,13 @@ const styles = StyleSheet.create({
   searchResults: { padding: spacing.xl },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
   first: { marginTop: spacing.lg },
+  specRail: { gap: spacing.sm, paddingRight: spacing.xl },
+  spec: { width: 84, alignItems: 'center', gap: 6 },
+  specIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
+  specName: { fontSize: 12, lineHeight: 15, fontWeight: '600', color: colors.navy, textAlign: 'center' },
+  trust: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl },
+  trustItem: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: spacing.md, borderRadius: 12, backgroundColor: '#F6F8F7' },
+  trustText: { fontSize: 11, lineHeight: 14, fontWeight: '700', color: colors.navy, textAlign: 'center' },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
   bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 46, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: 10 },
   bookTitle: { fontSize: 14, fontWeight: '800' },
@@ -446,7 +506,7 @@ const styles = StyleSheet.create({
   dotOn: { width: 18, backgroundColor: colors.green },
   sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   seeAll: { fontSize: 14, fontWeight: '700', color: colors.green },
-  newsCard: { width: CARD_W, height: 150, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.green },
+  newsCard: { width: CARD_W, height: 128, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.green },
   newsShade: { gap: 2, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: 'rgba(15, 42, 71, 0.62)' },
   newsMeta: { fontSize: 11, fontWeight: '700', color: 'rgba(255, 255, 255, 0.85)' },
   newsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: colors.white },
