@@ -612,4 +612,5 @@ export const fr: Record<string, string> = {
   "patient.doctor.text": "Généraliste ou spécialiste",
   "patient.structure": "Une structure de santé",
   "patient.changeCountry": "Changer de pays",
+  "welcome.countryLogin": "Dans quel pays êtes-vous ?",
 };

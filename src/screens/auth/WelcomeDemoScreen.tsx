@@ -29,6 +29,9 @@ const SPEC_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> 
   OPHTHALMOLOGY: 'eye', DENTISTRY: 'medical', ENT: 'ear', PSYCHIATRY: 'chatbubbles', NEUROLOGY: 'pulse',
 };
 
+/** Ce qui ouvre la fenêtre du pays : un profil, « Rendez-vous » (connexion patient) ou la connexion (choix du profil). */
+type Gate = 'patient' | 'practitioner' | 'structure' | 'appointments' | 'login';
+
 /** Valeur enregistrée pour « Tous les pays ». */
 const ALL = 'ALL';
 
@@ -68,7 +71,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const [country, setCountry] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   // Bloc touché (Patient, Médecin, Structure) : le pays est demandé d'abord, comme sur le site, puis on continue.
-  const [pending, setPending] = useState<'patient' | 'practitioner' | 'structure' | null>(null);
+  const [pending, setPending] = useState<Gate | null>(null);
   const [news, setNews] = useState<News[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const specName = (x: Specialty) => (lang === 'fr' ? x.nameFr : x.nameEn);
@@ -146,15 +149,18 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
       return navigation.navigate('BookAgenda', { countryCode: code, specialty: s, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
     }
     if (next === 'patient') return setGateStep('choice');
-    setPending(null);
-    navigation.navigate('ProInfo', { profile: next });
+    // Connexion : le pays d'abord, puis « Je suis… » (patient, médecin, structure).
+    if (next === 'login') return setGateStep('profiles');
+    close();
+    if (next === 'appointments') navigation.navigate('EmailLogin', { profile: 'patient' });
+    else navigation.navigate('ProInfo', { profile: next });
   }
   const [gateCode, setGateCode] = useState<string | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
-  const [gateStep, setGateStep] = useState<'country' | 'choice'>('country');
+  const [gateStep, setGateStep] = useState<'country' | 'choice' | 'profiles'>('country');
   const gateCountry = countries.find((c) => c.code === gateCode);
   const [pickSpec, setPickSpec] = useState<Specialty | null>(null);
-  const ask = (profile: 'patient' | 'practitioner' | 'structure', spec: Specialty | null = null) => {
+  const ask = (profile: Gate, spec: Specialty | null = null) => {
     setPickSpec(spec);
     setGateCode(country);
     setGateOpen(false);
@@ -215,7 +221,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             </Pressable>
             <View style={styles.flex} />
             <LanguageSwitch compact />
-            <Pressable accessibilityRole="button" accessibilityLabel={t('welcome.login')} onPress={() => navigation.navigate('EmailLogin')} hitSlop={8}>
+            <Pressable accessibilityRole="button" accessibilityLabel={t('welcome.login')} onPress={() => ask('login')} hitSlop={8}>
               <Ionicons name="person-circle-outline" size={30} color={colors.white} />
             </Pressable>
           </View>
@@ -337,7 +343,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
       <View style={[styles.tabs, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
         {tab('home', fr ? 'Accueil' : 'Home', true)}
-        {tab('calendar-outline', fr ? 'Rendez-vous' : 'Appointments', false, () => navigation.navigate('EmailLogin'))}
+        {tab('calendar-outline', fr ? 'Rendez-vous' : 'Appointments', false, () => ask('appointments'))}
         {tab('heart-outline', fr ? 'Santé' : 'Health', false, () => navigation.navigate('News'))}
         {/* Sans numéro WhatsApp enregistré dans l'administration, l'onglet ouvre l'aide. */}
         {tab('logo-whatsapp', 'WhatsApp', false, () =>
@@ -345,12 +351,32 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             ? void Linking.openURL(`https://wa.me/${whatsapp}?text=${encodeURIComponent(t('support.whatsappText'))}`)
             : navigation.navigate('Faq'),
         )}
-        {tab('person-outline', fr ? 'Compte' : 'Account', false, () => navigation.navigate('EmailLogin'))}
+        {tab('person-outline', fr ? 'Compte' : 'Account', false, () => ask('login'))}
       </View>
 
       <Modal visible={!!pending} transparent animationType="fade" onRequestClose={close}>
         <View style={styles.gateBackdrop}>
-          {gateStep === 'choice' ? (
+          {gateStep === 'profiles' ? (
+            <View style={styles.gateCard}>
+              <Text style={styles.gateTag}>{gateCountry ? `${flagOf(gateCountry.code)} ${name(gateCountry)}` : ''}</Text>
+              <Text style={type.h2}>{t('welcome.iam')}</Text>
+              {(['patient', 'practitioner', 'structure'] as const).map((p) => (
+                <Pressable
+                  key={p}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    close();
+                    navigation.navigate('EmailLogin', { profile: p });
+                  }}
+                  style={({ pressed }) => [styles.choice, { backgroundColor: p === 'patient' ? colors.green : p === 'practitioner' ? colors.navy : colors.gold }, pressed && styles.pressed]}
+                >
+                  <Text style={[styles.choiceTitle, { color: p === 'structure' ? colors.navy : colors.white }]}>{t(`welcome.tile.${p}`)}</Text>
+                </Pressable>
+              ))}
+              <Button title={t('patient.changeCountry')} variant="ghost" onPress={() => setGateStep('country')} />
+              <Button title={t('common.cancel')} variant="ghost" onPress={close} />
+            </View>
+          ) : gateStep === 'choice' ? (
             <View style={styles.gateCard}>
               <Text style={styles.gateTag}>{gateCountry ? `${flagOf(gateCountry.code)} ${name(gateCountry)}` : ''}</Text>
               <Text style={type.h2}>{t('patient.consult')}</Text>
@@ -367,8 +393,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             </View>
           ) : (
           <View style={styles.gateCard}>
-            {pending ? <Text style={styles.gateTag}>{pickSpec ? specName(pickSpec) : t(`welcome.tile.${pending}`)}</Text> : null}
-            <Text style={type.h2}>{pending === 'patient' ? t('search.country') : t('welcome.countryPro')}</Text>
+            {pending ? <Text style={styles.gateTag}>{pickSpec ? specName(pickSpec) : pending === 'appointments' ? t('tab.appointments') : pending === 'login' ? t('welcome.login') : t(`welcome.tile.${pending}`)}</Text> : null}
+            <Text style={type.h2}>{pending === 'practitioner' || pending === 'structure' ? t('welcome.countryPro') : pending === 'login' ? t('welcome.countryLogin') : t('search.country')}</Text>
             {/* Liste déroulante dans la fenêtre (une seconde fenêtre ne s'ouvrirait pas par-dessus sur iPhone). */}
             <Pressable
               accessibilityRole="button"
