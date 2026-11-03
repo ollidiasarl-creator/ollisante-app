@@ -152,14 +152,17 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     else navigation.navigate('BookSpecialty', { countryCode: code, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
   };
 
-  // Profils en petites tuiles côte à côte : les trois tiennent sur une ligne.
+  // Profils en bandeaux fins, l'un sous l'autre.
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
-    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${text}`} onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
       <View style={styles.bookArt}>
-        <MaterialCommunityIcons name={icon} size={18} color={fg} />
+        <MaterialCommunityIcons name={icon} size={16} color={fg} />
       </View>
-      <Text style={[styles.bookTitle, { color: fg }]} numberOfLines={1}>{title}</Text>
-      <Text style={[styles.bookText, { color: fg }]} numberOfLines={2}>{text}</Text>
+      <View style={styles.flex}>
+        <Text style={[styles.bookTitle, { color: fg }]}>{title}</Text>
+        <Text style={[styles.bookText, { color: fg }]} numberOfLines={1}>{text}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={16} color={fg} />
     </Pressable>
   );
   const tab = (icon: React.ComponentProps<typeof Ionicons>['name'], label: string, active: boolean, onPress?: () => void) => (
@@ -234,7 +237,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           </View>
         ) : (
           <>
-        <View style={[styles.section, styles.first, styles.tiles]}>
+        <View style={[styles.section, styles.first]}>
           {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => ask('patient'))}
           {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => ask('practitioner'))}
           {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => ask('structure'))}
@@ -433,11 +436,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
   first: { marginTop: spacing.lg },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
-  tiles: { flexDirection: 'row', gap: spacing.sm },
-  bookCard: { flex: 1, gap: 4, paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderRadius: 12 },
-  bookTitle: { fontSize: 13, fontWeight: '800' },
-  bookText: { fontSize: 10.5, lineHeight: 13, opacity: 0.9 },
-  bookArt: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
+  bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 46, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: 10 },
+  bookTitle: { fontSize: 14, fontWeight: '800' },
+  bookText: { fontSize: 11, opacity: 0.9 },
+  bookArt: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
   rail: { gap: CARD_GAP, paddingRight: spacing.xl },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: spacing.xs },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
