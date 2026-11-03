@@ -25,10 +25,47 @@ interface Shortcut {
  * fréquentes et actualités. Une spécialité demande d'abord le pays, puis la connexion si besoin.
  */
 export default function SearchScreen({ navigation }: { navigation: any }) {
+  const { t } = useI18n();
+  const [text, setText] = useState('');
+  const [submitted, setSubmitted] = useState(0);
+  return (
+    <View style={styles.root}>
+      <View style={styles.bar}>
+        <Ionicons name="search" size={20} color={colors.muted} />
+        <TextInput
+          style={styles.input}
+          value={text}
+          onChangeText={setText}
+          placeholder={t('search.placeholder')}
+          placeholderTextColor={colors.muted}
+          autoFocus
+          autoCorrect={false}
+          returnKeyType="search"
+          onSubmitEditing={() => setSubmitted((n) => n + 1)}
+        />
+        {text ? (
+          <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={() => setText('')} hitSlop={8}>
+            <Ionicons name="close-circle" size={20} color={colors.muted} />
+          </Pressable>
+        ) : null}
+      </View>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <SearchResults text={text} setText={setText} submitted={submitted} navigation={navigation} />
+      </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * Résultats de la recherche générale pour un texte donné : sur l'écran Rechercher et directement sur l'accueil.
+ * `submitted` augmente quand on valide au clavier : une spécialité tapée en entier ouvre alors le choix du pays.
+ */
+export function SearchResults({ text, setText, submitted = 0, navigation }: {
+  text: string; setText: (v: string) => void; submitted?: number; navigation: any;
+}) {
   const { t, lang } = useI18n();
   const insets = useSafeAreaInsets();
   const guest = useAuth().status === 'signedOut';
-  const [text, setText] = useState('');
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [news, setNews] = useState<News[]>([]);
@@ -85,32 +122,15 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
     else navigation.navigate('BookAgenda', { countryCode: code, specialty: s });
   }
 
-  return (
-    <View style={styles.root}>
-      <View style={styles.bar}>
-        <Ionicons name="search" size={20} color={colors.muted} />
-        <TextInput
-          style={styles.input}
-          value={text}
-          onChangeText={setText}
-          placeholder={t('search.placeholder')}
-          placeholderTextColor={colors.muted}
-          autoFocus
-          autoCorrect={false}
-          returnKeyType="search"
-          onSubmitEditing={() => {
-            const s = exactSpecialty(text, specialties);
-            if (s) book(s);
-          }}
-        />
-        {text ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={() => setText('')} hitSlop={8}>
-            <Ionicons name="close-circle" size={20} color={colors.muted} />
-          </Pressable>
-        ) : null}
-      </View>
+  useEffect(() => {
+    if (!submitted) return;
+    const s = exactSpecialty(text, specialties);
+    if (s) book(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted]);
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+  return (
+    <View style={styles.results}>
         {topics.length ? (
           <View style={styles.block}>
             <Text style={styles.head}>{t('search.topics')}</Text>
@@ -181,7 +201,6 @@ export default function SearchScreen({ navigation }: { navigation: any }) {
         ) : null}
 
         {nothing ? <Text style={type.body}>{t('search.none')}</Text> : null}
-      </ScrollView>
 
       <Modal visible={!!asking} animationType="slide" onRequestClose={() => setAsking(null)}>
         <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -226,7 +245,8 @@ const styles = StyleSheet.create({
     borderColor: colors.green,
   },
   input: { flex: 1, fontSize: 16, color: colors.navy, paddingVertical: 10 },
-  content: { padding: spacing.xl, gap: spacing.xl },
+  content: { padding: spacing.xl },
+  results: { gap: spacing.xl },
   block: { gap: spacing.sm },
   head: { ...type.label, fontWeight: '800', color: colors.green },
   item: {

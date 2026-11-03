@@ -2,8 +2,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getLocales } from 'expo-localization';
 import { useIsFocused } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { FlatList, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { FlatList, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAppConfig, getCountries, getNews } from '../../api/endpoints';
 import type { Country, News } from '../../api/types';
@@ -12,6 +12,7 @@ import { BrandMark } from '../../components/Brand';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { NewsArt, newsImage, useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
+import { SearchResults } from '../shared/SearchScreen';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
 
@@ -40,6 +41,15 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const { t, lang } = useI18n();
   const insets = useSafeAreaInsets();
   const focused = useIsFocused();
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [submitted, setSubmitted] = useState(0);
+  const searchInput = useRef<TextInput>(null);
+  const stopSearch = () => {
+    setQuery('');
+    setSearching(false);
+    searchInput.current?.blur();
+  };
   const [countries, setCountries] = useState<Country[]>([]);
   const [country, setCountry] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
@@ -143,7 +153,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     <View style={styles.root}>
       {/* Heure et batterie en blanc sur le bandeau vert, de nouveau sombres sur les écrans suivants. */}
       <StatusBar style={focused ? 'light' : 'dark'} />
-      <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }} keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top }]}>
           <View style={styles.bar}>
             <BrandMark />
@@ -167,13 +177,43 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             {fr ? 'Votre santé, ' : 'Your health, '}
             <Text style={styles.sloganAccent}>{fr ? 'simplement' : 'simply'}</Text>
           </Text>
-          <Pressable accessibilityRole="search" onPress={() => navigation.navigate('Search')} style={({ pressed }) => [styles.search, pressed && styles.pressed]}>
-            <Ionicons name="search" size={20} color={colors.green} />
-            <Text style={styles.searchText} numberOfLines={1}>{fr ? 'Médecin, spécialité, symptôme…' : 'Doctor, specialty, symptom…'}</Text>
-          </Pressable>
+          {/* Recherche sur place : les résultats remplacent les blocs, sans changer d'écran. */}
+          <View style={styles.searchRow}>
+            <View style={[styles.search, styles.flex]}>
+              <Ionicons name="search" size={20} color={colors.green} />
+              <TextInput
+                ref={searchInput}
+                style={styles.searchInput}
+                value={query}
+                onChangeText={setQuery}
+                onFocus={() => setSearching(true)}
+                placeholder={fr ? 'Médecin, spécialité, symptôme…' : 'Doctor, specialty, symptom…'}
+                placeholderTextColor={colors.muted}
+                autoCorrect={false}
+                returnKeyType="search"
+                onSubmitEditing={() => setSubmitted((n) => n + 1)}
+              />
+              {query ? (
+                <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} onPress={() => setQuery('')} hitSlop={8}>
+                  <Ionicons name="close-circle" size={20} color={colors.muted} />
+                </Pressable>
+              ) : null}
+            </View>
+            {searching ? (
+              <Pressable accessibilityRole="button" onPress={stopSearch} hitSlop={8}>
+                <Text style={styles.cancel}>{t('common.cancel')}</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
 
+        {searching ? (
+          <View style={styles.searchResults}>
+            <SearchResults text={query} setText={setQuery} submitted={submitted} navigation={navigation} />
+          </View>
+        ) : (
+          <>
         <View style={[styles.section, styles.first]}>
           {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => ask('patient'))}
           {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => ask('practitioner'))}
@@ -214,6 +254,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             />
           </View>
         ) : null}
+          </>
+        )}
       </ScrollView>
 
       <View style={[styles.tabs, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
@@ -343,7 +385,6 @@ const styles = StyleSheet.create({
   slogan: { color: colors.white, fontSize: 24, lineHeight: 30, fontWeight: '800' },
   sloganAccent: { color: colors.gold },
   search: {
-    marginTop: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -352,7 +393,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.white,
   },
-  searchText: { flex: 1, fontSize: 16, color: colors.muted },
+  searchRow: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  searchInput: { flex: 1, fontSize: 16, color: colors.navy, paddingVertical: 10 },
+  cancel: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  searchResults: { padding: spacing.xl },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
   first: { marginTop: spacing.lg },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
