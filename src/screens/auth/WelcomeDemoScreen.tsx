@@ -3,14 +3,14 @@ import { getLocales } from 'expo-localization';
 import { useIsFocused } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getAppConfig, getCountries, getNews } from '../../api/endpoints';
 import type { Country, News } from '../../api/types';
 import { countryStore } from '../../auth/storage';
 import { BrandMark } from '../../components/Brand';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
-import { useNewsMeta } from '../../components/NewsCards';
+import { NewsArt, newsImage, useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
@@ -183,7 +183,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
         {news.length ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{fr ? 'À la une' : 'Trending now'}</Text>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>{fr ? 'Actualités santé' : 'Health news'}</Text>
+              <Pressable accessibilityRole="button" onPress={() => navigation.navigate('News')} hitSlop={8}>
+                <Text style={styles.seeAll}>{fr ? 'Tout voir' : 'See all'}</Text>
+              </Pressable>
+            </View>
             <FlatList
               horizontal
               data={news}
@@ -191,9 +196,19 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rail}
               renderItem={({ item }) => (
+                // Carte illustrée, comme les rubriques « à la une » des applis de référence : la photo (ou le
+                // visuel aux couleurs Ollisanté), le titre en blanc sur un voile sombre, puis « Lire ».
                 <Pressable accessibilityRole="button" onPress={() => navigation.navigate('NewsDetail', { news: item, countries })} style={({ pressed }) => [styles.newsCard, pressed && styles.pressed]}>
-                  <Text style={styles.featureMeta} numberOfLines={1}>{meta(item)}</Text>
-                  <Text style={styles.newsTitle} numberOfLines={3}>{item.title}</Text>
+                  {newsImage(item) ? (
+                    <Image source={{ uri: newsImage(item)! }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                  ) : (
+                    <NewsArt item={item} flagSize={40} />
+                  )}
+                  <View style={styles.newsShade}>
+                    <Text style={styles.newsMeta} numberOfLines={1}>{meta(item)}</Text>
+                    <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.newsRead}>{fr ? 'Lire' : 'Read'} →</Text>
+                  </View>
                 </Pressable>
               )}
             />
@@ -338,7 +353,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   searchText: { flex: 1, fontSize: 16, color: colors.muted },
-  featureMeta: { fontSize: 12, fontWeight: '700', color: colors.green },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
   first: { marginTop: spacing.lg },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
@@ -347,8 +361,13 @@ const styles = StyleSheet.create({
   bookText: { fontSize: 12, opacity: 0.9 },
   bookArt: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
   rail: { gap: spacing.md, paddingRight: spacing.xl },
-  newsCard: { width: 230, minHeight: 84, gap: 6, padding: 14, borderRadius: radius.card, backgroundColor: '#F6F8F7' },
-  newsTitle: { fontSize: 14, lineHeight: 19, fontWeight: '700', color: colors.navy },
+  sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  seeAll: { fontSize: 14, fontWeight: '700', color: colors.green },
+  newsCard: { width: 260, height: 150, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.green },
+  newsShade: { gap: 2, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: 'rgba(15, 42, 71, 0.62)' },
+  newsMeta: { fontSize: 11, fontWeight: '700', color: 'rgba(255, 255, 255, 0.85)' },
+  newsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: colors.white },
+  newsRead: { marginTop: 2, fontSize: 12, fontWeight: '700', color: colors.gold },
   tabs: {
     flexDirection: 'row',
     borderTopWidth: StyleSheet.hairlineWidth,
