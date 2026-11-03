@@ -18,6 +18,10 @@ import { colors, radius, spacing, type } from '../../theme';
 
 type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
+/** Cartes d'actualités : largeur fixe pour défiler carte par carte. */
+const CARD_W = 260;
+const CARD_GAP = 12;
+
 /** Valeur enregistrée pour « Tous les pays ». */
 const ALL = 'ALL';
 
@@ -41,6 +45,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const { t, lang } = useI18n();
   const insets = useSafeAreaInsets();
   const focused = useIsFocused();
+  const rail = useRef<FlatList<News>>(null);
+  const pausedUntil = useRef(0);
+  const [slide, setSlide] = useState(0);
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [submitted, setSubmitted] = useState(0);
@@ -95,6 +102,21 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     };
   }, [country]);
 
+  // Défilement automatique, carte par carte, toutes les 4 secondes (comme les applis de référence).
+  useEffect(() => {
+    setSlide(0);
+    if (news.length < 2 || searching) return;
+    const timer = setInterval(() => {
+      if (Date.now() < pausedUntil.current) return;
+      setSlide((i) => {
+        const next = (i + 1) % news.length;
+        rail.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [news, searching]);
+
   function choose(code: string | null) {
     setCountry(code);
     setPicking(false);
@@ -130,16 +152,14 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     else navigation.navigate('BookSpecialty', { countryCode: code, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
   };
 
+  // Profils en petites tuiles côte à côte : les trois tiennent sur une ligne.
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`${title}, ${text}`} onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
       <View style={styles.bookArt}>
-        <MaterialCommunityIcons name={icon} size={20} color={fg} />
+        <MaterialCommunityIcons name={icon} size={18} color={fg} />
       </View>
-      <View style={styles.flex}>
-        <Text style={[styles.bookTitle, { color: fg }]}>{title}</Text>
-        <Text style={[styles.bookText, { color: fg }]} numberOfLines={1}>{text}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color={fg} />
+      <Text style={[styles.bookTitle, { color: fg }]} numberOfLines={1}>{title}</Text>
+      <Text style={[styles.bookText, { color: fg }]} numberOfLines={2}>{text}</Text>
     </Pressable>
   );
   const tab = (icon: React.ComponentProps<typeof Ionicons>['name'], label: string, active: boolean, onPress?: () => void) => (
@@ -214,7 +234,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           </View>
         ) : (
           <>
-        <View style={[styles.section, styles.first]}>
+        <View style={[styles.section, styles.first, styles.tiles]}>
           {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => ask('patient'))}
           {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => ask('practitioner'))}
           {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => ask('structure'))}
@@ -230,11 +250,19 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
               </Pressable>
             </View>
             <FlatList
+              ref={rail}
               horizontal
               data={news}
               keyExtractor={(n) => n.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.rail}
+              snapToInterval={CARD_W + CARD_GAP}
+              decelerationRate="fast"
+              getItemLayout={(_, i) => ({ length: CARD_W + CARD_GAP, offset: (CARD_W + CARD_GAP) * i, index: i })}
+              onScrollBeginDrag={() => {
+                pausedUntil.current = Date.now() + 8000;
+              }}
+              onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / (CARD_W + CARD_GAP)))}
               renderItem={({ item }) => (
                 // Carte illustrée, comme les rubriques « à la une » des applis de référence : la photo (ou le
                 // visuel aux couleurs Ollisanté), le titre en blanc sur un voile sombre, puis « Lire ».
@@ -252,6 +280,11 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
                 </Pressable>
               )}
             />
+            {news.length > 1 ? (
+              <View style={styles.dots}>
+                {news.map((n, i) => <View key={n.id} style={[styles.dot, i === slide && styles.dotOn]} />)}
+              </View>
+            ) : null}
           </View>
         ) : null}
           </>
@@ -400,14 +433,18 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
   first: { marginTop: spacing.lg },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
-  bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 56, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: 12 },
-  bookTitle: { fontSize: 15, fontWeight: '800' },
-  bookText: { fontSize: 12, opacity: 0.9 },
-  bookArt: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
-  rail: { gap: spacing.md, paddingRight: spacing.xl },
+  tiles: { flexDirection: 'row', gap: spacing.sm },
+  bookCard: { flex: 1, gap: 4, paddingHorizontal: spacing.sm, paddingVertical: spacing.sm, borderRadius: 12 },
+  bookTitle: { fontSize: 13, fontWeight: '800' },
+  bookText: { fontSize: 10.5, lineHeight: 13, opacity: 0.9 },
+  bookArt: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
+  rail: { gap: CARD_GAP, paddingRight: spacing.xl },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: spacing.xs },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
+  dotOn: { width: 18, backgroundColor: colors.green },
   sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   seeAll: { fontSize: 14, fontWeight: '700', color: colors.green },
-  newsCard: { width: 260, height: 150, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.green },
+  newsCard: { width: CARD_W, height: 150, borderRadius: 16, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: colors.green },
   newsShade: { gap: 2, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, backgroundColor: 'rgba(15, 42, 71, 0.62)' },
   newsMeta: { fontSize: 11, fontWeight: '700', color: 'rgba(255, 255, 255, 0.85)' },
   newsTitle: { fontSize: 14, lineHeight: 18, fontWeight: '800', color: colors.white },
