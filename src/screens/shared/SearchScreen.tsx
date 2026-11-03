@@ -6,7 +6,7 @@ import { getCountries, getFaq, getNews, getProfile, getSpecialties } from '../..
 import type { Country, FaqEntry, News, Specialty } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { countryStore } from '../../auth/storage';
-import { Button, SelectPicker } from '../../components/ui';
+import { Button } from '../../components/ui';
 import { useI18n } from '../../i18n';
 import { exactSpecialty, fold, frequentSpecialties, matchSpecialties, rank, suggest, suggestSpecialties, suggestTopics } from '../../lib/search';
 
@@ -146,18 +146,6 @@ export function SearchResults({ text, setText, submitted = 0, navigation }: {
 
         <View style={styles.block}>
           <Text style={styles.head}>{t('search.book')}</Text>
-          <SelectPicker
-            label={t('search.allSpecialties')}
-            options={[...specialties]
-              .sort((a, b) => specName(a).localeCompare(specName(b), lang))
-              .map((s) => ({ value: s.code, label: specName(s) }))}
-            value={null}
-            placeholder={t('search.pickSpecialty')}
-            onChange={(code) => {
-              const s = specialties.find((x) => x.code === code);
-              if (s) book(s);
-            }}
-          />
           {specs.map((s) => (
             <Pressable key={s.code} accessibilityRole="button" onPress={() => book(s)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
               <Ionicons name="medkit-outline" size={18} color={colors.green} />
