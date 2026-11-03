@@ -91,7 +91,7 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
 
   const header = (
     <View style={styles.header}>
-      <Text style={styles.place}>{facility ? facility.name : t('book.video')}</Text>
+      <Text style={styles.place}>{facility ? facility.name : video ? t('book.video') : (route.params.place ?? '')}</Text>
       <Text style={type.title}>{specialtyName}</Text>
       {guest ? (
         <Banner kind="info" text={t('book.guestSlots')} />

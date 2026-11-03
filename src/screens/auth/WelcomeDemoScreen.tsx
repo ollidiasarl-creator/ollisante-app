@@ -90,22 +90,34 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     setPicking(false);
     void countryStore.save(code ?? ALL);
     const next = pending;
+    if (!next || !code) return setPending(null);
+    // Patient : second choix dans la même fenêtre (un médecin ou une structure), comme sur le site.
+    if (next === 'patient') return setGateStep('choice');
     setPending(null);
-    if (!next || !code) return;
-    if (next === 'patient') navigation.navigate('BookFacility', { countryCode: code });
-    else navigation.navigate('ProInfo', { profile: next });
+    navigation.navigate('ProInfo', { profile: next });
   }
   const [gateCode, setGateCode] = useState<string | null>(null);
   const [gateOpen, setGateOpen] = useState(false);
+  const [gateStep, setGateStep] = useState<'country' | 'choice'>('country');
   const gateCountry = countries.find((c) => c.code === gateCode);
   const ask = (profile: 'patient' | 'practitioner' | 'structure') => {
     setGateCode(country);
     setGateOpen(false);
+    setGateStep('country');
     setPending(profile);
   };
   const close = () => {
     setPicking(false);
     setPending(null);
+    setGateStep('country');
+  };
+  const consult = (what: 'doctor' | 'facility') => {
+    const code = gateCode;
+    close();
+    if (!code) return;
+    const c = countries.find((x) => x.code === code);
+    if (what === 'facility') navigation.navigate('BookFacility', { countryCode: code });
+    else navigation.navigate('BookSpecialty', { countryCode: code, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
   };
 
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
@@ -204,6 +216,22 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
       <Modal visible={!!pending} transparent animationType="fade" onRequestClose={close}>
         <View style={styles.gateBackdrop}>
+          {gateStep === 'choice' ? (
+            <View style={styles.gateCard}>
+              <Text style={styles.gateTag}>{gateCountry ? `${flagOf(gateCountry.code)} ${name(gateCountry)}` : ''}</Text>
+              <Text style={type.h2}>{t('patient.consult')}</Text>
+              <Pressable accessibilityRole="button" onPress={() => consult('doctor')} style={({ pressed }) => [styles.choice, { backgroundColor: colors.navy }, pressed && styles.pressed]}>
+                <Text style={[styles.choiceTitle, { color: colors.white }]}>{t('patient.doctor')}</Text>
+                <Text style={[styles.choiceText, { color: colors.white }]}>{t('patient.doctor.text')}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => consult('facility')} style={({ pressed }) => [styles.choice, { backgroundColor: colors.gold }, pressed && styles.pressed]}>
+                <Text style={[styles.choiceTitle, { color: colors.navy }]}>{t('patient.structure')}</Text>
+                <Text style={[styles.choiceText, { color: colors.navy }]}>{t('welcome.tile.structure.text')}</Text>
+              </Pressable>
+              <Button title={t('patient.changeCountry')} variant="ghost" onPress={() => setGateStep('country')} />
+              <Button title={t('common.cancel')} variant="ghost" onPress={close} />
+            </View>
+          ) : (
           <View style={styles.gateCard}>
             {pending ? <Text style={styles.gateTag}>{t(`welcome.tile.${pending}`)}</Text> : null}
             <Text style={type.h2}>{pending === 'patient' ? t('search.country') : t('welcome.countryPro')}</Text>
@@ -239,6 +267,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             <Button title={t('common.continue')} disabled={!gateCode} onPress={() => gateCode && choose(gateCode)} />
             <Button title={t('common.cancel')} variant="ghost" onPress={close} />
           </View>
+          )}
         </View>
       </Modal>
 
@@ -345,6 +374,9 @@ const styles = StyleSheet.create({
   selectOpen: { borderColor: colors.green },
   dropdown: { maxHeight: 240, borderRadius: radius.input, borderWidth: 1, borderColor: colors.border, marginTop: -spacing.sm },
   option: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  choice: { gap: 2, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderRadius: 14 },
+  choiceTitle: { fontSize: 17, fontWeight: '800' },
+  choiceText: { fontSize: 13, opacity: 0.9 },
   gateTag: { fontSize: 13, fontWeight: '800', color: colors.green, textTransform: 'uppercase' },
   modalTitle: { padding: spacing.xl, paddingBottom: spacing.md },
   row: {

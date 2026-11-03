@@ -607,4 +607,9 @@ export const fr: Record<string, string> = {
   "welcome.countryPro": "Dans quel pays exercez-vous ?",
   "common.continue": "Continuer",
   "common.cancel": "Annuler",
+  "patient.consult": "Vous souhaitez consulter",
+  "patient.doctor": "Un médecin",
+  "patient.doctor.text": "Généraliste ou spécialiste",
+  "patient.structure": "Une structure de santé",
+  "patient.changeCountry": "Changer de pays",
 };
