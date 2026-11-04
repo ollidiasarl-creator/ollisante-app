@@ -228,7 +228,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             </Pressable>
           </View>
           <Text style={styles.hello}>{greeting(lang)},</Text>
-          <Text style={styles.slogan}>
+          <Text style={styles.slogan} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
             {fr ? 'Votre rendez-vous médical, ' : 'Your medical appointment, '}
             <Text style={styles.sloganAccent}>{fr ? 'simplement' : 'simply'}</Text>
           </Text>
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   },
   countryText: { flexShrink: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
   hello: { marginTop: spacing.sm, color: 'rgba(255, 255, 255, 0.85)', fontSize: 14, fontWeight: '600' },
-  slogan: { color: colors.white, fontSize: 22, lineHeight: 28, fontWeight: '800' },
+  slogan: { color: colors.white, fontSize: 20, lineHeight: 26, fontWeight: '800' },
   sloganAccent: { color: colors.gold },
   search: {
     flexDirection: 'row',
