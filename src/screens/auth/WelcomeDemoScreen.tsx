@@ -160,6 +160,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const [gateStep, setGateStep] = useState<'country' | 'choice' | 'profiles'>('country');
   const gateCountry = countries.find((c) => c.code === gateCode);
   const [pickSpec, setPickSpec] = useState<Specialty | null>(null);
+  const [proMenu, setProMenu] = useState(false);
   const ask = (profile: Gate, spec: Specialty | null = null) => {
     setPickSpec(spec);
     setGateCode(country);
@@ -221,8 +222,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             </Pressable>
             <View style={styles.flex} />
             <LanguageSwitch compact />
-            <Pressable accessibilityRole="button" accessibilityLabel={t('welcome.login')} onPress={() => ask('login')} hitSlop={8}>
-              <Ionicons name="person-circle-outline" size={30} color={colors.white} />
+            {/* « Espace pro » : médecin ou structure, puis le pays et la connexion (comme sur le site). */}
+            <Pressable accessibilityRole="button" onPress={() => setProMenu(true)} hitSlop={6} style={({ pressed }) => [styles.proPill, pressed && styles.pressed]}>
+              <Text style={styles.proPillText}>{fr ? 'Espace pro' : 'Pro area'}</Text>
             </Pressable>
           </View>
           <Text style={styles.hello}>{greeting(lang)},</Text>
@@ -354,6 +356,29 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
         {tab('person-outline', fr ? 'Compte' : 'Account', false, () => ask('login'))}
       </View>
 
+      <Modal visible={proMenu} transparent animationType="fade" onRequestClose={() => setProMenu(false)}>
+        <View style={styles.gateBackdrop}>
+          <View style={styles.gateCard}>
+            <Text style={styles.gateTag}>{fr ? 'Espace pro' : 'Pro area'}</Text>
+            <Text style={type.h2}>{t('welcome.iam')}</Text>
+            {(['practitioner', 'structure'] as const).map((p) => (
+              <Pressable
+                key={p}
+                accessibilityRole="button"
+                onPress={() => {
+                  setProMenu(false);
+                  ask(p);
+                }}
+                style={({ pressed }) => [styles.choice, { backgroundColor: p === 'practitioner' ? colors.navy : colors.gold }, pressed && styles.pressed]}
+              >
+                <Text style={[styles.choiceTitle, { color: p === 'practitioner' ? colors.white : colors.navy }]}>{t(`welcome.tile.${p}`)}</Text>
+              </Pressable>
+            ))}
+            <Button title={t('common.cancel')} variant="ghost" onPress={() => setProMenu(false)} />
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={!!pending} transparent animationType="fade" onRequestClose={close}>
         <View style={styles.gateBackdrop}>
           {gateStep === 'profiles' ? (
@@ -472,12 +497,12 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
   },
-  bar: { height: 44, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginHorizontal: -spacing.sm },
+  bar: { height: 44, flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: -spacing.sm },
   country: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    maxWidth: 170,
+    maxWidth: 118,
     paddingHorizontal: spacing.md,
     minHeight: 32,
     borderRadius: radius.pill,
@@ -550,6 +575,8 @@ const styles = StyleSheet.create({
   choice: { gap: 2, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderRadius: 14 },
   choiceTitle: { fontSize: 17, fontWeight: '800' },
   choiceText: { fontSize: 13, opacity: 0.9 },
+  proPill: { paddingHorizontal: spacing.sm, minHeight: 30, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.white },
+  proPillText: { color: colors.white, fontSize: 12, fontWeight: '800' },
   gateTag: { fontSize: 13, fontWeight: '800', color: colors.green, textTransform: 'uppercase' },
   modalTitle: { padding: spacing.xl, paddingBottom: spacing.md },
   row: {
