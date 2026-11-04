@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   },
   countryText: { flexShrink: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
   hello: { marginTop: spacing.sm, color: 'rgba(255, 255, 255, 0.85)', fontSize: 14, fontWeight: '600' },
-  slogan: { color: colors.white, fontSize: 20, lineHeight: 26, fontWeight: '800' },
+  slogan: { color: colors.white, fontSize: 16, lineHeight: 21, fontWeight: '800' },
   sloganAccent: { color: colors.gold },
   search: {
     flexDirection: 'row',
