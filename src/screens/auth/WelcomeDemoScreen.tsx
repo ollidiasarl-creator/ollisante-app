@@ -229,7 +229,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           </View>
           <Text style={styles.hello}>{greeting(lang)},</Text>
           <Text style={styles.slogan}>
-            {fr ? 'Votre santé, ' : 'Your health, '}
+            {fr ? 'Votre rendez-vous médical, ' : 'Your medical appointment, '}
             <Text style={styles.sloganAccent}>{fr ? 'simplement' : 'simply'}</Text>
           </Text>
           {/* Recherche sur place : les résultats remplacent les blocs, sans changer d'écran. */}
