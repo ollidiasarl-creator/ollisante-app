@@ -26,6 +26,7 @@ import WelcomeDemoScreen from '../screens/auth/WelcomeDemoScreen';
 import AdminPractitionersScreen from '../screens/admin/AdminPractitionersScreen';
 import PublishNewsScreen from '../screens/admin/PublishNewsScreen';
 import BookAgendaScreen from '../screens/patient/BookAgendaScreen';
+import DoctorsAvailableScreen from '../screens/patient/DoctorsAvailableScreen';
 import BookConfirmScreen from '../screens/patient/BookConfirmScreen';
 import BookFacilityScreen from '../screens/patient/BookFacilityScreen';
 import BookSpecialtyScreen from '../screens/patient/BookSpecialtyScreen';
@@ -220,6 +221,7 @@ export function RootNavigator() {
             <Stack.Screen name="BookFacility" component={BookFacilityScreen} options={{ title: t('appt.book') }} />
             <Stack.Screen name="BookSpecialty" component={BookSpecialtyScreen} options={{ title: '' }} />
             <Stack.Screen name="BookAgenda" component={BookAgendaScreen} options={{ title: '' }} />
+            <Stack.Screen name="DoctorsAvailable" component={DoctorsAvailableScreen} options={{ title: '' }} />
             <Stack.Screen name="Emergency" component={EmergencyScreen} options={{ title: t('emergency.screen') }} />
             <Stack.Screen name="Faq" component={FaqScreen} options={{ title: t('account.helpTitle') }} />
           </>
@@ -251,6 +253,7 @@ export function RootNavigator() {
             <Stack.Screen name="BookFacility" component={BookFacilityScreen} options={{ title: t('appt.book') }} />
             <Stack.Screen name="BookSpecialty" component={BookSpecialtyScreen} options={{ title: '' }} />
             <Stack.Screen name="BookAgenda" component={BookAgendaScreen} options={{ title: '' }} />
+            <Stack.Screen name="DoctorsAvailable" component={DoctorsAvailableScreen} options={{ title: '' }} />
             <Stack.Screen name="BookConfirm" component={BookConfirmScreen} options={{ title: '' }} />
             <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: '' }} />
             <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} options={{ title: t('profile.title') }} />

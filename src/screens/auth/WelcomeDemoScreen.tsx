@@ -14,7 +14,6 @@ import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { NewsArt, newsImage, useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
 import { PlacePicker } from '../../components/PlacePicker';
-import { AvailableNow } from '../../components/AvailableNow';
 import { SearchResults } from '../shared/SearchScreen';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
@@ -149,7 +148,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
       const s = pickSpec;
       const where = { city: gateCity, locality: gateLocality, place: placeLabel(c) };
       close();
-      return navigation.navigate('BookAgenda', { countryCode: code, specialty: s, ...where });
+      return navigation.navigate('DoctorsAvailable', { countryCode: code, specialty: s, ...where });
     }
     if (next === 'patient') return setGateStep('choice');
     // Connexion : le pays d'abord, puis « Je suis… » (patient, médecin, structure).
@@ -191,7 +190,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     const c = countries.find((x) => x.code === code);
     const where = { city: gateCity, locality: gateLocality };
     if (what === 'facility') navigation.navigate('BookFacility', { countryCode: code, ...where });
-    else navigation.navigate('BookSpecialty', { countryCode: code, ...where, place: placeLabel(c) });
+    else navigation.navigate('DoctorsAvailable', { countryCode: code, ...where });
   };
 
   // Profils en bandeaux fins, l'un sous l'autre.
@@ -286,7 +285,6 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => ask('structure'))}
         </View>
 
-        <AvailableNow country={country} navigation={navigation} />
 
 
         {news.length ? (
