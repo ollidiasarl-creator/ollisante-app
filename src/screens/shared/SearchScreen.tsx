@@ -8,7 +8,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { countryStore } from '../../auth/storage';
 import { Button } from '../../components/ui';
 import { useI18n } from '../../i18n';
-import { exactSpecialty, fold, frequentSpecialties, matchSpecialties, rank, suggest, suggestSpecialties, suggestTopics } from '../../lib/search';
+import { exactSpecialty, fold, matchSpecialties, rank, suggest, suggestSpecialties, suggestTopics } from '../../lib/search';
 
 /** Les correspondances par début de mot d'abord, puis celles trouvées dans le texte, sans doublon. */
 const merge = <T,>(first: T[], then: T[]) => [...first, ...then.filter((x) => !first.includes(x))];
@@ -98,7 +98,8 @@ export function SearchResults({ text, setText, submitted = 0, navigation }: {
   // Dès la première lettre : ce qui commence par ces lettres d'abord, puis (à partir de 3 lettres) ce qui les contient.
   const topics = term ? suggestTopics(text).slice(0, 5) : [];
   const specs = useMemo(
-    () => (term ? merge(suggestSpecialties(text, specialties), matchSpecialties(text, specialties)) : frequentSpecialties(specialties)),
+    // Rien n'est proposé tant que la personne n'a pas commencé à taper.
+    () => (term ? merge(suggestSpecialties(text, specialties), matchSpecialties(text, specialties)) : []),
     [term, text, specialties],
   );
   const pages = term ? merge(suggest(text, shortcuts, (s) => s.title, (s) => s.keywords), rank(text, shortcuts, (s) => `${s.title} ${s.keywords}`)) : [];
@@ -145,7 +146,7 @@ export function SearchResults({ text, setText, submitted = 0, navigation }: {
         ) : null}
 
         <View style={styles.block}>
-          <Text style={styles.head}>{t('search.book')}</Text>
+          {specs.length ? <Text style={styles.head}>{t('search.book')}</Text> : null}
           {specs.map((s) => (
             <Pressable key={s.code} accessibilityRole="button" onPress={() => book(s)} style={({ pressed }) => [styles.item, pressed && styles.pressed]}>
               <Ionicons name="medkit-outline" size={18} color={colors.green} />
