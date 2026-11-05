@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { takePendingBooking } from '../lib/pendingBooking';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { BrandMark } from '../components/Brand';
@@ -177,15 +178,27 @@ function Unreachable() {
   );
 }
 
+const navRef = createNavigationContainerRef<any>();
+
 export function RootNavigator() {
   const { status, user } = useAuth();
   const { t } = useI18n();
+  // Horaire choisi avant la connexion : une fois connecté en patient, on ouvre directement sa confirmation.
+  const role = user?.role;
+  useEffect(() => {
+    if (status === 'signedOut' || role !== 'PATIENT') return;
+    const timer = setTimeout(() => {
+      const b = takePendingBooking();
+      if (b && navRef.isReady()) navRef.navigate('BookConfirm', b);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [status, role]);
 
   if (status === 'loading') return <Loading />;
   if (status === 'unreachable') return <Unreachable />;
 
   return (
-    <NavigationContainer theme={theme}>
+    <NavigationContainer theme={theme} ref={navRef}>
       <Stack.Navigator screenOptions={stackOptions}>
         {status === 'signedOut' ? (
           <>

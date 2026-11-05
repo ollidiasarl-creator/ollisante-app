@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthContext';
 import type { AppointmentMode, Facility, PractitionerSummary, Slot, Specialty } from '../../api/types';
 import { Banner, Button, EmptyState, Loading } from '../../components/ui';
 import { PlacePicker } from '../../components/PlacePicker';
+import { setPendingBooking } from '../../lib/pendingBooking';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../lib/errors';
 import { addDays, dayKey, formatMoney, formatTime, isoDate } from '../../lib/format';
@@ -77,7 +78,7 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
 
   // Créneaux de chaque praticien pour les jours affichés (rechargés quand on change de semaine).
   useEffect(() => {
-    if (guest || practitioners.length === 0) return;
+    if (practitioners.length === 0) return;
     sequence.current += 1;
     const mine = sequence.current;
     const from = isoDate(start);
@@ -88,7 +89,7 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
         .then((list) => mine === sequence.current && setSlots((s) => ({ ...s, [p.id]: list })))
         .catch(() => mine === sequence.current && setSlots((s) => ({ ...s, [p.id]: 'error' })));
     }
-  }, [guest, practitioners, start, mode, facility?.id]);
+  }, [practitioners, start, mode, facility?.id]);
 
   const specialtyName = lang === 'fr' ? specialty.nameFr : specialty.nameEn;
   const dayLabel = (d: Date) => ({
@@ -111,9 +112,8 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
           }}
         />
       ) : null}
-      {guest ? (
-        <Banner kind="info" text={t('book.guestSlots')} />
-      ) : (
+      {guest ? <Banner kind="info" text={t('book.guestSlots')} /> : null}
+      {(
         <View style={styles.weekNav}>
           <Pressable
             accessibilityRole="button"
@@ -157,7 +157,7 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
       ListHeaderComponent={header}
       ListEmptyComponent={error ? null : <EmptyState title={t('book.noDoctorTitle')} text={t('book.noDoctorText')} />}
       ListFooterComponent={
-        practitioners.length && !guest ? <Text style={type.small}>{t('booking.timezoneNote')}</Text> : null
+        practitioners.length ? <Text style={type.small}>{t('booking.timezoneNote')}</Text> : null
       }
       renderItem={({ item: p }) => {
         const state = slots[p.id];
@@ -188,18 +188,7 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
               </View>
             </View>
 
-            {guest ? (
-              <Button
-                title={t('book.guestLogin')}
-                variant="secondary"
-                onPress={() =>
-                  navigation.navigate('EmailLogin', {
-                    profile: 'patient',
-                    toBook: true,
-                  })
-                }
-              />
-            ) : state === 'loading' || state === undefined ? (
+            {state === 'loading' || state === undefined ? (
               <Text style={type.small}>{t('book.loadingSlots')}</Text>
             ) : state === 'error' ? (
               <Text style={styles.slotError}>{t('book.slotsError')}</Text>
@@ -219,13 +208,13 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
                             key={`${s.startsAt}-${s.mode}`}
                             accessibilityRole="button"
                             accessibilityLabel={`${label.weekday} ${label.date} ${formatTime(s.startsAt, locale)}`}
-                            onPress={() =>
-                              navigation.navigate('BookConfirm', {
-                                practitioner: p,
-                                slot: s,
-                                facility,
-                              })
-                            }
+                            onPress={() => {
+                              // Visiteur : il se connecte (ou crée son compte), puis arrive sur la confirmation.
+                              if (guest) {
+                                setPendingBooking({ practitioner: p, slot: s, facility });
+                                navigation.navigate('EmailLogin', { profile: 'patient', toBook: true });
+                              } else navigation.navigate('BookConfirm', { practitioner: p, slot: s, facility });
+                            }}
                             style={({ pressed }) => [styles.slot, pressed && styles.slotPressed]}
                           >
                             <Text style={styles.slotText}>{formatTime(s.startsAt, locale)}</Text>

@@ -118,8 +118,8 @@ export function SearchResults({ text, setText, submitted = 0, navigation }: {
     const s = asking!;
     setAsking(null);
     void countryStore.save(code);
-    if (guest) navigation.navigate('EmailLogin', { profile: 'patient', toBook: true });
-    else navigation.navigate('BookAgenda', { countryCode: code, specialty: s });
+    // Les horaires sont visibles de tous : la connexion n'est demandée qu'au moment de réserver.
+    navigation.navigate('BookAgenda', { countryCode: code, specialty: s });
   }
 
   useEffect(() => {

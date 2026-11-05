@@ -14,6 +14,7 @@ import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { NewsArt, newsImage, useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
 import { PlacePicker } from '../../components/PlacePicker';
+import { AvailableNow } from '../../components/AvailableNow';
 import { SearchResults } from '../shared/SearchScreen';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
@@ -284,6 +285,8 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => ask('practitioner'))}
           {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => ask('structure'))}
         </View>
+
+        <AvailableNow country={country} navigation={navigation} />
 
 
         {news.length ? (
