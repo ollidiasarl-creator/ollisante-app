@@ -13,6 +13,7 @@ import { BrandMark } from '../../components/Brand';
 import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { NewsArt, newsImage, useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
+import { PlacePicker } from '../../components/PlacePicker';
 import { SearchResults } from '../shared/SearchScreen';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
@@ -145,8 +146,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     if (next === 'patient' && pickSpec) {
       const c = countries.find((x) => x.code === code);
       const s = pickSpec;
+      const where = { city: gateCity, locality: gateLocality, place: placeLabel(c) };
       close();
-      return navigation.navigate('BookAgenda', { countryCode: code, specialty: s, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
+      return navigation.navigate('BookAgenda', { countryCode: code, specialty: s, ...where });
     }
     if (next === 'patient') return setGateStep('choice');
     // Connexion : le pays d'abord, puis « Je suis… » (patient, médecin, structure).
@@ -159,11 +161,18 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const [gateOpen, setGateOpen] = useState(false);
   const [gateStep, setGateStep] = useState<'country' | 'choice' | 'profiles'>('country');
   const gateCountry = countries.find((c) => c.code === gateCode);
+  // Ville et localité : facultatives, proposées au patient une fois le pays choisi (comme sur le site).
+  const [gateCity, setGateCity] = useState<string | null>(null);
+  const [gateLocality, setGateLocality] = useState<string | null>(null);
+  const placeLabel = (c?: Country) =>
+    c ? `${flagOf(c.code)} ${[gateLocality, gateCity, name(c)].filter(Boolean).join(', ')}` : '';
   const [pickSpec, setPickSpec] = useState<Specialty | null>(null);
   const [proMenu, setProMenu] = useState(false);
   const ask = (profile: Gate, spec: Specialty | null = null) => {
     setPickSpec(spec);
     setGateCode(country);
+    setGateCity(null);
+    setGateLocality(null);
     setGateOpen(false);
     setGateStep('country');
     setPending(profile);
@@ -179,8 +188,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
     close();
     if (!code) return;
     const c = countries.find((x) => x.code === code);
-    if (what === 'facility') navigation.navigate('BookFacility', { countryCode: code });
-    else navigation.navigate('BookSpecialty', { countryCode: code, place: c ? `${flagOf(c.code)} ${name(c)}` : '' });
+    const where = { city: gateCity, locality: gateLocality };
+    if (what === 'facility') navigation.navigate('BookFacility', { countryCode: code, ...where });
+    else navigation.navigate('BookSpecialty', { countryCode: code, ...where, place: placeLabel(c) });
   };
 
   // Profils en bandeaux fins, l'un sous l'autre.
@@ -403,7 +413,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
             </View>
           ) : gateStep === 'choice' ? (
             <View style={styles.gateCard}>
-              <Text style={styles.gateTag}>{gateCountry ? `${flagOf(gateCountry.code)} ${name(gateCountry)}` : ''}</Text>
+              <Text style={styles.gateTag}>{placeLabel(gateCountry)}</Text>
               <Text style={type.h2}>{t('patient.consult')}</Text>
               <Pressable accessibilityRole="button" onPress={() => consult('doctor')} style={({ pressed }) => [styles.choice, { backgroundColor: colors.navy }, pressed && styles.pressed]}>
                 <Text style={[styles.choiceTitle, { color: colors.white }]}>{t('patient.doctor')}</Text>
@@ -417,7 +427,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
               <Button title={t('common.cancel')} variant="ghost" onPress={close} />
             </View>
           ) : (
-          <View style={styles.gateCard}>
+          <ScrollView style={styles.gateScroll} contentContainerStyle={styles.gateCard} keyboardShouldPersistTaps="handled">
             {pending ? <Text style={styles.gateTag}>{pickSpec ? specName(pickSpec) : pending === 'appointments' ? t('tab.appointments') : pending === 'login' ? t('welcome.login') : t(`welcome.tile.${pending}`)}</Text> : null}
             <Text style={type.h2}>{pending === 'practitioner' || pending === 'structure' ? t('welcome.countryPro') : pending === 'login' ? t('welcome.countryLogin') : t('search.country')}</Text>
             {/* Liste déroulante dans la fenêtre (une seconde fenêtre ne s'ouvrirait pas par-dessus sur iPhone). */}
@@ -439,6 +449,10 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
                     key={c.code}
                     accessibilityRole="button"
                     onPress={() => {
+                      if (c.code !== gateCode) {
+                        setGateCity(null);
+                        setGateLocality(null);
+                      }
                       setGateCode(c.code);
                       setGateOpen(false);
                     }}
@@ -449,9 +463,20 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
                 ))}
               </ScrollView>
             ) : null}
+            {(pending === 'patient' || pickSpec) && !gateOpen ? (
+              <PlacePicker
+                country={gateCode}
+                city={gateCity}
+                locality={gateLocality}
+                onChange={(city, locality) => {
+                  setGateCity(city);
+                  setGateLocality(locality);
+                }}
+              />
+            ) : null}
             <Button title={t('common.continue')} disabled={!gateCode} onPress={() => gateCode && choose(gateCode)} />
             <Button title={t('common.cancel')} variant="ghost" onPress={close} />
-          </View>
+          </ScrollView>
           )}
         </View>
       </Modal>
@@ -559,6 +584,7 @@ const styles = StyleSheet.create({
   tabTextOn: { color: colors.green },
   gateBackdrop: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: 'rgba(15, 42, 71, 0.45)' },
   gateCard: { gap: spacing.md, padding: spacing.xl, borderRadius: 18, backgroundColor: colors.white },
+  gateScroll: { flexGrow: 0, maxHeight: '88%', borderRadius: 18, backgroundColor: colors.white },
   select: {
     flexDirection: 'row',
     alignItems: 'center',

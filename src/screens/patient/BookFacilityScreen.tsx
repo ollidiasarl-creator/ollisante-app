@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { countryStore } from '../../auth/storage';
 import type { Country, Facility } from '../../api/types';
 import { Banner, Card, CountryPicker, EmptyState, Loading, TextField } from '../../components/ui';
+import { PlacePicker } from '../../components/PlacePicker';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../lib/errors';
 import { deviceCountry } from '../../lib/media';
@@ -23,6 +24,9 @@ export default function BookFacilityScreen({ route, navigation }: { route?: any;
   // Pays du compte : la prise de rendez-vous est limitée à ce pays (le choix n'est proposé que s'il est inconnu).
   const [locked, setLocked] = useState(false);
   const [facilities, setFacilities] = useState<Facility[]>([]);
+  // Ville et localité (facultatives) : venues de la fenêtre de l'accueil, modifiables ici.
+  const [city, setCity] = useState<string | null>(route?.params?.city ?? null);
+  const [locality, setLocality] = useState<string | null>(route?.params?.locality ?? null);
   const [filter, setFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,14 +57,14 @@ export default function BookFacilityScreen({ route, navigation }: { route?: any;
     let active = true;
     setLoading(true);
     setError(null);
-    listFacilities(country)
+    listFacilities(country, city, locality)
       .then((list) => active && setFacilities(list))
       .catch((e) => active && setError(errorMessage(e, t)))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [country, t]);
+  }, [country, city, locality, t]);
 
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -81,6 +85,10 @@ export default function BookFacilityScreen({ route, navigation }: { route?: any;
           countries={countries}
           value={country}
           onChange={(code) => {
+            if (code !== country) {
+              setCity(null);
+              setLocality(null);
+            }
             setCountry(code);
             setFilter('');
             // Premier choix : il devient le pays du compte (et filtre ensuite tout le reste).
@@ -91,6 +99,15 @@ export default function BookFacilityScreen({ route, navigation }: { route?: any;
       )}
       {country ? (
         <>
+          <PlacePicker
+            country={country}
+            city={city}
+            locality={locality}
+            onChange={(c, l) => {
+              setCity(c);
+              setLocality(l);
+            }}
+          />
           {VIDEO_ENABLED ? (
             <Card onPress={() => navigation.navigate('BookSpecialty', { countryCode: country, video: true })}>
               <View style={styles.videoRow}>
@@ -139,8 +156,8 @@ export default function BookFacilityScreen({ route, navigation }: { route?: any;
             </View>
             <View style={styles.flex}>
               <Text style={type.h3}>{item.name}</Text>
-              {item.city || item.address ? (
-                <Text style={type.small}>{[item.address, item.city].filter(Boolean).join(', ')}</Text>
+              {item.city || item.address || item.locality ? (
+                <Text style={type.small}>{[item.address, item.locality, item.city].filter(Boolean).join(', ')}</Text>
               ) : null}
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.muted} />
@@ -153,7 +170,14 @@ export default function BookFacilityScreen({ route, navigation }: { route?: any;
             <Loading />
           </View>
         ) : country && !error ? (
+          city ? (
+          <EmptyState
+            title={lang === 'fr' ? 'Aucun établissement à cet endroit' : 'No facility in this area yet'}
+            text={lang === 'fr' ? 'Essayez une autre ville ou localité, ou « Toutes les villes ».' : 'Try another city or area, or “All cities”.'}
+          />
+        ) : (
           <EmptyState title={t('book.noHospitalTitle')} text={t('book.noHospitalText')} />
+        )
         ) : null
       }
     />

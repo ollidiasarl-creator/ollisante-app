@@ -120,6 +120,13 @@ export interface Facility {
   phone: string | null;
   latitude: number | null;
   longitude: number | null;
+  locality?: string | null;
+}
+
+/** Une ville et ses localités (quartiers, communes). */
+export interface Place {
+  city: string;
+  localities: string[];
 }
 
 export type NewsAudience = 'ALL' | 'PATIENT' | 'PRACTITIONER';

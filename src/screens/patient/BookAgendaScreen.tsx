@@ -5,6 +5,7 @@ import { getSlots, searchPractitioners } from '../../api/endpoints';
 import { useAuth } from '../../auth/AuthContext';
 import type { AppointmentMode, Facility, PractitionerSummary, Slot, Specialty } from '../../api/types';
 import { Banner, Button, EmptyState, Loading } from '../../components/ui';
+import { PlacePicker } from '../../components/PlacePicker';
 import { useI18n } from '../../i18n';
 import { errorMessage } from '../../lib/errors';
 import { addDays, dayKey, formatMoney, formatTime, isoDate } from '../../lib/format';
@@ -31,6 +32,10 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
     specialty: Specialty;
   };
   const { t, lang, locale } = useI18n();
+  // Ville et localité (sans établissement choisi) : modifiables ici, la liste se met à jour aussitôt.
+  const [city, setCity] = useState<string | null>(route.params.city ?? null);
+  const [locality, setLocality] = useState<string | null>(route.params.locality ?? null);
+  const byPlace = !facility && !video;
   // Sans compte : la liste des médecins seulement ; les créneaux ne se voient qu'une fois connecté.
   const guest = useAuth().status === 'signedOut';
   const [start, setStart] = useState(startOfToday);
@@ -54,6 +59,8 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
         specialty: specialty.code,
         facilityId: facility?.id,
         teleconsultation: video ? true : null,
+        city: byPlace ? city : null,
+        locality: byPlace ? locality : null,
         size: 30,
       });
       setPractitioners(page.content);
@@ -62,7 +69,7 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
     } finally {
       setLoading(false);
     }
-  }, [countryCode, specialty.code, facility?.id, video, t]);
+  }, [countryCode, specialty.code, facility?.id, video, byPlace, city, locality, t]);
 
   useEffect(() => {
     void loadPractitioners();
@@ -93,6 +100,17 @@ export default function BookAgendaScreen({ route, navigation }: { route: any; na
     <View style={styles.header}>
       <Text style={styles.place}>{facility ? facility.name : video ? t('book.video') : (route.params.place ?? '')}</Text>
       <Text style={type.title}>{specialtyName}</Text>
+      {byPlace ? (
+        <PlacePicker
+          country={countryCode}
+          city={city}
+          locality={locality}
+          onChange={(c, l) => {
+            setCity(c);
+            setLocality(l);
+          }}
+        />
+      ) : null}
       {guest ? (
         <Banner kind="info" text={t('book.guestSlots')} />
       ) : (

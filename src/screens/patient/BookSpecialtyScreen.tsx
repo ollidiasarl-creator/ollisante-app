@@ -84,7 +84,7 @@ export default function BookSpecialtyScreen({ route, navigation }: { route: any;
         <Pressable
           accessibilityRole="button"
           onPress={() =>
-            navigation.navigate('BookAgenda', { countryCode, facility, video, specialty: item, place: route.params.place })
+            navigation.navigate('BookAgenda', { countryCode, facility, video, specialty: item, place: route.params.place, city: route.params.city, locality: route.params.locality })
           }
           style={({ pressed }) => [styles.tile, items.length % 2 === 1 && styles.tileHalf, pressed && styles.pressed]}
         >

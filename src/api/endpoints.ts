@@ -32,8 +32,7 @@ import type {
   Relative,
   RelativeInput,
   UserResponse,
-  VerificationStatus,
-} from './types';
+  VerificationStatus, Place } from './types';
 
 function query(params: Record<string, string | number | boolean | null | undefined>): string {
   const parts: string[] = [];
@@ -167,6 +166,8 @@ export const searchPractitioners = (params: {
   q?: string;
   teleconsultation?: boolean | null;
   facilityId?: string | null;
+  city?: string | null;
+  locality?: string | null;
   page?: number;
   size?: number;
 }) => request<PageResponse<PractitionerSummary>>(`/api/v1/practitioners${query(params)}`, { auth: false });
@@ -180,8 +181,12 @@ export const getSlots = (
 ) =>
   request<Slot[]>(`/api/v1/practitioners/${id}/slots${query(params)}`, { auth: false });
 
-export const listFacilities = (countryCode?: string) =>
-  request<Facility[]>(`/api/v1/facilities${query({ countryCode })}`, { auth: false });
+export const listFacilities = (countryCode?: string, city?: string | null, locality?: string | null) =>
+  request<Facility[]>(`/api/v1/facilities${query({ countryCode, city, locality })}`, { auth: false });
+
+/** Villes d'un pays et leurs localités (quartiers, communes), pour les listes de la recherche. */
+export const getPlaces = (countryCode: string) =>
+  request<Place[]>(`/api/v1/facilities/places${query({ countryCode })}`, { auth: false });
 
 /** Spécialités réservables dans un établissement (celles des praticiens qui y consultent). */
 export const getFacilitySpecialties = (facilityId: string) =>
