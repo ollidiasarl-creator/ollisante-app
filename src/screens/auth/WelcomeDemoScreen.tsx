@@ -1,6 +1,5 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { getLocales } from 'expo-localization';
-import { useIsFocused } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -55,7 +54,6 @@ function greeting(lang: string): string {
 export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   const { t, lang } = useI18n();
   const insets = useSafeAreaInsets();
-  const focused = useIsFocused();
   const rail = useRef<FlatList<News>>(null);
   const pausedUntil = useRef(0);
   const [slide, setSlide] = useState(0);
@@ -216,11 +214,11 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.root}>
       {/* Heure et batterie en blanc sur le bandeau vert, de nouveau sombres sur les écrans suivants. */}
-      <StatusBar style={focused ? 'light' : 'dark'} />
+      <StatusBar style="dark" />
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }} keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top }]}>
           <View style={styles.bar}>
-            <BrandMark onDark />
+            <BrandMark />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('welcome.country')}
@@ -228,7 +226,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
               style={({ pressed }) => [styles.country, pressed && styles.pressed]}
             >
               <Text style={styles.countryText} numberOfLines={1}>{current ? `${flagOf(current.code)} ${name(current)}` : `🌍 ${fr ? 'Tous pays' : 'All'}`}</Text>
-              <Ionicons name="chevron-down" size={14} color={colors.white} />
+              <Ionicons name="chevron-down" size={14} color={colors.navy} />
             </Pressable>
             <View style={styles.flex} />
             <LanguageSwitch compact />
@@ -512,12 +510,17 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   );
 }
 
+/** Couleurs du bandeau d'accueil : vert très pâle et filet discret. */
+const HERO_BG = '#EAF5EF';
+const HERO_LINE = '#CFE3D9';
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.white },
   flex: { flex: 1 },
   pressed: { opacity: 0.85 },
+  // Bandeau clair (vert très pâle) : le logo vert y reste bien visible.
   hero: {
-    backgroundColor: colors.green,
+    backgroundColor: HERO_BG,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
     borderBottomLeftRadius: 28,
@@ -532,12 +535,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     minHeight: 32,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: HERO_LINE,
   },
-  countryText: { flexShrink: 1, color: colors.white, fontSize: 14, fontWeight: '700' },
-  hello: { marginTop: spacing.sm, color: 'rgba(255, 255, 255, 0.85)', fontSize: 14, fontWeight: '600' },
-  slogan: { color: colors.white, fontSize: 16, lineHeight: 21, fontWeight: '800' },
-  sloganAccent: { color: colors.gold },
+  countryText: { flexShrink: 1, color: colors.navy, fontSize: 14, fontWeight: '700' },
+  hello: { marginTop: spacing.sm, color: '#3D5263', fontSize: 14, fontWeight: '600' },
+  slogan: { color: colors.navy, fontSize: 16, lineHeight: 21, fontWeight: '800' },
+  sloganAccent: { color: colors.green },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -546,10 +551,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
     backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: HERO_LINE,
   },
   searchRow: { marginTop: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   searchInput: { flex: 1, fontSize: 16, color: colors.navy, paddingVertical: 10 },
-  cancel: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  cancel: { color: colors.green, fontSize: 15, fontWeight: '700' },
   searchResults: { padding: spacing.xl },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.navy },
   first: { marginTop: spacing.lg },
@@ -602,8 +609,8 @@ const styles = StyleSheet.create({
   choice: { gap: 2, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderRadius: 14 },
   choiceTitle: { fontSize: 17, fontWeight: '800' },
   choiceText: { fontSize: 13, opacity: 0.9 },
-  proPill: { paddingHorizontal: spacing.sm, minHeight: 30, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.white },
-  proPillText: { color: colors.white, fontSize: 12, fontWeight: '800' },
+  proPill: { paddingHorizontal: spacing.sm, minHeight: 30, justifyContent: 'center', borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.green, backgroundColor: colors.white },
+  proPillText: { color: colors.green, fontSize: 12, fontWeight: '800' },
   gateTag: { fontSize: 13, fontWeight: '800', color: colors.green, textTransform: 'uppercase' },
   modalTitle: { padding: spacing.xl, paddingBottom: spacing.md },
   row: {
