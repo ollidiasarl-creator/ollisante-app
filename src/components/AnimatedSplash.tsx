@@ -66,5 +66,5 @@ export function AnimatedSplash({ ready }: { ready: boolean }) {
 const styles = StyleSheet.create({
   root: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   backdrop: { backgroundColor: colors.white },
-  emblem: { width: NATIVE_SIZE, height: NATIVE_SIZE, borderRadius: NATIVE_SIZE / 2 },
+  emblem: { width: NATIVE_SIZE, height: NATIVE_SIZE },
 });

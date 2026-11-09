@@ -2,7 +2,7 @@ import React from 'react';
 import { Image } from 'react-native';
 
 /**
- * Signature visuelle : le O à la carte de l'Afrique, en haut à gauche de chaque écran.
+ * Signature visuelle : le logo « L'accueil » (cercle ouvert et point doré), en haut à gauche de chaque écran.
  * L'animation d'ouverture fait glisser l'emblème du centre de l'écran jusqu'à cette place.
  */
 export const MARK_SIZE = 32;
@@ -14,7 +14,7 @@ export function BrandMark({ size = MARK_SIZE }: { size?: number }) {
   return (
     <Image
       source={require('../../assets/emblem.png')}
-      style={{ width: size, height: size, borderRadius: size / 2 }}
+      style={{ width: size, height: size }}
       accessibilityLabel="Ollisanté"
     />
   );
