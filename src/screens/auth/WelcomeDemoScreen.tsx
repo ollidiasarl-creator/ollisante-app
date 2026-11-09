@@ -193,15 +193,16 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
 
   // Profils en bandeaux fins, l'un sous l'autre.
   const book = (icon: IconName, title: string, text: string, bg: string, fg: string, onPress: () => void) => (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.bookCard, { backgroundColor: bg }, pressed && styles.pressed]}>
-      <View style={styles.bookArt}>
+    // Version « fond blanc » : carte blanche, la couleur du bloc dans le rond et le titre.
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.bookCard, pressed && styles.pressed]}>
+      <View style={[styles.bookArt, { backgroundColor: bg }]}>
         <MaterialCommunityIcons name={icon} size={16} color={fg} />
       </View>
       <View style={styles.flex}>
-        <Text style={[styles.bookTitle, { color: fg }]}>{title}</Text>
-        <Text style={[styles.bookText, { color: fg }]} numberOfLines={1}>{text}</Text>
+        <Text style={[styles.bookTitle, { color: bg === colors.gold ? colors.navy : bg }]}>{title}</Text>
+        <Text style={[styles.bookText, { color: colors.muted }]} numberOfLines={1}>{text}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={16} color={fg} />
+      <Ionicons name="chevron-forward" size={16} color={bg === colors.gold ? colors.navy : bg} />
     </Pressable>
   );
   const tab = (icon: React.ComponentProps<typeof Ionicons>['name'], label: string, active: boolean, onPress?: () => void) => (
@@ -510,9 +511,9 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   );
 }
 
-/** Couleurs du bandeau d'accueil : vert très pâle et filet discret. */
-const HERO_BG = '#EAF5EF';
-const HERO_LINE = '#CFE3D9';
+/** Couleurs de l'accueil, version « fond blanc » (ancienne version vert pâle : archives/couleurs-vert-pale-2026-11). */
+const HERO_BG = '#FFFFFF';
+const HERO_LINE = '#E3EBE7';
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.white },
@@ -521,6 +522,8 @@ const styles = StyleSheet.create({
   // Bandeau clair (vert très pâle) : le logo vert y reste bien visible.
   hero: {
     backgroundColor: HERO_BG,
+    borderBottomWidth: 1,
+    borderColor: HERO_LINE,
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xl,
     borderBottomLeftRadius: 28,
@@ -565,10 +568,10 @@ const styles = StyleSheet.create({
   specIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.greenSoft },
   specName: { fontSize: 12, lineHeight: 15, fontWeight: '600', color: colors.navy, textAlign: 'center' },
   section: { marginTop: spacing.lg, paddingHorizontal: spacing.xl, gap: spacing.sm },
-  bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 46, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: 10 },
+  bookCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 50, paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: 12, backgroundColor: colors.white, borderWidth: 1.5, borderColor: HERO_LINE },
   bookTitle: { fontSize: 14, fontWeight: '800' },
-  bookText: { fontSize: 11, opacity: 0.9 },
-  bookArt: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.18)' },
+  bookText: { fontSize: 11 },
+  bookArt: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   rail: { gap: CARD_GAP, paddingRight: spacing.xl },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: spacing.xs },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
