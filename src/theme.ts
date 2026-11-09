@@ -4,6 +4,10 @@ export const colors = {
   green: '#176B50',
   greenPressed: '#0F5340',
   greenSoft: '#E8F3EE',
+  /** Vert très pâle des bandeaux et en-têtes (même teinte que le site). */
+  mint: '#EAF5EF',
+  /** Fond des écrans, encore plus pâle. */
+  mintBg: '#F3F9F6',
   navy: '#0F2A47',
   muted: '#5B6B7B',
   border: '#D6E2DC',
