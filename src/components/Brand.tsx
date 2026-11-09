@@ -10,10 +10,11 @@ export const MARK_SIZE = 32;
 export const MARK_CENTER_X = 16 + MARK_SIZE / 2;
 export const MARK_CENTER_Y = 22;
 
-export function BrandMark({ size = MARK_SIZE }: { size?: number }) {
+/** {@code onDark} : cercle blanc (et point doré), pour les bandeaux verts. */
+export function BrandMark({ size = MARK_SIZE, onDark = false }: { size?: number; onDark?: boolean }) {
   return (
     <Image
-      source={require('../../assets/emblem.png')}
+      source={onDark ? require('../../assets/emblem-white.png') : require('../../assets/emblem.png')}
       style={{ width: size, height: size }}
       accessibilityLabel="Ollisanté"
     />

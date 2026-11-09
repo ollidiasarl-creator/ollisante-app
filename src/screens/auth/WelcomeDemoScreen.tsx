@@ -220,7 +220,7 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
       <ScrollView contentContainerStyle={{ paddingBottom: spacing.xl }} keyboardShouldPersistTaps="handled">
         <View style={[styles.hero, { paddingTop: insets.top }]}>
           <View style={styles.bar}>
-            <BrandMark />
+            <BrandMark onDark />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('welcome.country')}

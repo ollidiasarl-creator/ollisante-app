@@ -1,70 +1,88 @@
+import { getLocales } from 'expo-localization';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme';
-import { MARK_CENTER_X, MARK_CENTER_Y, MARK_SIZE } from './Brand';
 
-/** Taille de l'emblème sur l'écran de démarrage natif (app.json → expo-splash-screen → imageWidth). */
+/** Taille du cercle sur l'écran de démarrage natif (app.json → expo-splash-screen → imageWidth). */
 const NATIVE_SIZE = 120;
+/** Taille du cercle quand il devient le « O » d'Ollisanté. */
+const RING = 80;
+/** Durée minimale d'affichage du logo complet, pour qu'on ait le temps de le lire. */
+const HOLD_MS = 1100;
 
 /**
- * Prend le relais de l'écran de démarrage natif (même emblème, même place) :
- * l'emblème pulse, puis glisse en haut à gauche jusqu'à sa place dans l'en-tête pendant que l'écran s'efface.
- * Il ne part qu'une fois `ready` (session chargée) pour ne jamais montrer d'écran intermédiaire.
+ * Ouverture de l'application : prend le relais de l'écran de démarrage natif (même cercle, même place).
+ * « Bienvenue » apparaît, le grand cercle glisse à gauche et devient le « O », les lettres « llisanté » apparaissent
+ * à côté : on lit « Ollisanté ». Puis l'écran s'efface, une fois la session chargée (`ready`).
  */
 export function AnimatedSplash({ ready }: { ready: boolean }) {
-  const { width, height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const pulse = useRef(new Animated.Value(0)).current;
-  const move = useRef(new Animated.Value(0)).current;
-  const [pulsed, setPulsed] = useState(false);
+  const [intro] = useState(() => new Animated.Value(0));
+  const [out] = useState(() => new Animated.Value(0));
+  const [textW, setTextW] = useState<number | null>(null);
+  const [shown, setShown] = useState(false);
   const [done, setDone] = useState(false);
   const started = useRef(false);
+  const fr = (getLocales()[0]?.languageCode ?? 'fr') !== 'en';
 
-  function start() {
-    if (started.current) return;
+  // L'animation démarre quand la largeur des lettres est connue (pour partir du cercle exactement centré).
+  useEffect(() => {
+    if (textW === null || started.current) return;
     started.current = true;
     void SplashScreen.hideAsync();
-    Animated.timing(pulse, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.quad), useNativeDriver: true }).start(
-      () => setPulsed(true),
-    );
-  }
+    Animated.timing(intro, { toValue: 1, duration: 900, delay: 150, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }).start(() => {
+      setTimeout(() => setShown(true), HOLD_MS);
+    });
+  }, [textW, intro]);
 
   useEffect(() => {
-    if (!pulsed || !ready) return;
-    Animated.timing(move, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }).start(
-      () => setDone(true),
-    );
-  }, [pulsed, ready, move]);
+    if (!shown || !ready) return;
+    Animated.timing(out, { toValue: 1, duration: 500, easing: Easing.out(Easing.quad), useNativeDriver: true }).start(() => setDone(true));
+  }, [shown, ready, out]);
 
   if (done) return null;
 
-  const pulseScale = pulse.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.1, 1] });
-  const scale = move.interpolate({ inputRange: [0, 1], outputRange: [1, MARK_SIZE / NATIVE_SIZE] });
-  const translateX = move.interpolate({ inputRange: [0, 1], outputRange: [0, MARK_CENTER_X - width / 2] });
-  const translateY = move.interpolate({ inputRange: [0, 1], outputRange: [0, insets.top + MARK_CENTER_Y - height / 2] });
-  // Le fond s'efface pendant le trajet ; l'emblème disparaît à l'arrivée, sur celui de l'en-tête.
-  const backdrop = move.interpolate({ inputRange: [0, 0.35, 0.85], outputRange: [1, 1, 0] });
-  const markOpacity = move.interpolate({ inputRange: [0, 0.9, 1], outputRange: [1, 1, 0] });
+  const half = (textW ?? 0) / 2;
+  // Au départ, le cercle est seul et centré (comme l'écran natif) ; il glisse à gauche pour laisser la place aux lettres.
+  const ringX = intro.interpolate({ inputRange: [0, 1], outputRange: [half, 0] });
+  const ringScale = intro.interpolate({ inputRange: [0, 1], outputRange: [NATIVE_SIZE / RING, 1] });
+  const lettersOpacity = intro.interpolate({ inputRange: [0, 0.45, 1], outputRange: [0, 0, 1] });
+  const lettersX = intro.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] });
+  const welcomeOpacity = intro.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 0, 1] });
+  const fade = out.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
 
   return (
-    <Animated.View style={styles.root} onLayout={start} pointerEvents={pulsed && ready ? 'none' : 'auto'}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdrop }]} />
-      <Animated.Image
-        source={require('../../assets/emblem.png')}
-        accessibilityLabel="Ollisanté"
-        style={[
-          styles.emblem,
-          { opacity: markOpacity, transform: [{ translateX }, { translateY }, { scale }, { scale: pulseScale }] },
-        ]}
-      />
+    <Animated.View style={[styles.root, { opacity: fade }]} pointerEvents={shown && ready ? 'none' : 'auto'}>
+      <View style={styles.center}>
+        <Animated.Text style={[styles.welcome, { opacity: welcomeOpacity }]}>{fr ? 'Bienvenue' : 'Welcome'}</Animated.Text>
+        <View style={styles.row} accessible accessibilityLabel="Ollisanté">
+          <Animated.Image
+            source={require('../../assets/emblem.png')}
+            style={[styles.ring, { transform: [{ translateX: ringX }, { scale: ringScale }] }]}
+          />
+          <Animated.View
+            style={{ opacity: lettersOpacity, transform: [{ translateX: lettersX }] }}
+            onLayout={(e) => textW === null && setTextW(e.nativeEvent.layout.width)}
+          >
+            <Text style={styles.word}>
+              <Text style={styles.olli}>lli</Text>
+              <Text style={styles.sante}>santé</Text>
+            </Text>
+          </Animated.View>
+        </View>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  backdrop: { backgroundColor: colors.white },
-  emblem: { width: NATIVE_SIZE, height: NATIVE_SIZE },
+  root: { ...StyleSheet.absoluteFill, backgroundColor: colors.white },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // « Bienvenue » posé au-dessus du logo, sans le décaler : le logo reste au centre exact, comme l'écran natif.
+  welcome: { position: 'absolute', top: '50%', marginTop: -RING / 2 - 64, fontSize: 22, fontWeight: '700', color: colors.navy, letterSpacing: 0.3 },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  ring: { width: RING, height: RING, marginRight: -4 },
+  word: { fontSize: 62, lineHeight: 70, fontWeight: '800', letterSpacing: -1.5 },
+  olli: { color: colors.navy },
+  sante: { color: colors.green },
 });
