@@ -511,12 +511,12 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
   );
 }
 
-/** Couleurs de l'accueil, version « fond blanc » (ancienne version vert pâle : archives/couleurs-vert-pale-2026-11). */
-const HERO_BG = colors.mint;
-const HERO_LINE = '#CFE3D9';
+/** Fond blanc, validé définitivement le 10 novembre 2026 (ancienne version vert pâle : archives/couleurs-vert-pale-2026-11). */
+const HERO_BG = colors.white;
+const HERO_LINE = '#E3EBE7';
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.mintBg },
+  root: { flex: 1, backgroundColor: colors.white },
   flex: { flex: 1 },
   pressed: { opacity: 0.85 },
   // Bandeau clair (vert très pâle) : le logo vert y reste bien visible.

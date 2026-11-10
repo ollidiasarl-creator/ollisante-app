@@ -65,8 +65,8 @@ const theme = {
   colors: {
     ...DefaultTheme.colors,
     primary: colors.green,
-    background: colors.mintBg,
-    card: colors.mint,
+    background: colors.white,
+    card: colors.white,
     text: colors.navy,
     border: colors.border,
   },
@@ -87,8 +87,8 @@ const stackOptions = {
   headerTintColor: colors.navy,
   headerTitleStyle: { fontWeight: '700' as const },
   headerShadowVisible: false,
-  headerStyle: { backgroundColor: colors.mint },
-  contentStyle: { backgroundColor: colors.mintBg },
+  headerStyle: { backgroundColor: colors.white },
+  contentStyle: { backgroundColor: colors.white },
 };
 
 function tabOptions(icons: Record<string, string>) {
@@ -100,8 +100,8 @@ function tabOptions(icons: Record<string, string>) {
     headerRight,
     headerRightContainerStyle: { paddingRight: 16 },
     headerShadowVisible: false,
-    headerStyle: { backgroundColor: colors.mint },
-    sceneStyle: { backgroundColor: colors.mintBg },
+    headerStyle: { backgroundColor: colors.white },
+    sceneStyle: { backgroundColor: colors.white },
     tabBarActiveTintColor: colors.green,
     tabBarInactiveTintColor: colors.muted,
     tabBarLabelStyle: { fontSize: 12, fontWeight: '600' as const },
