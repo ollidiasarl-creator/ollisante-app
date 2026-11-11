@@ -4,6 +4,7 @@ import { getSlots, listFacilities, searchPractitioners } from '../../api/endpoin
 import type { Facility, PractitionerSummary, Slot } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { PlacePicker } from '../../components/PlacePicker';
+import { PhotoCard } from '../../components/PhotoCard';
 import { Loading } from '../../components/ui';
 import { useI18n } from '../../i18n';
 import { addDays, formatMoney, formatTime, isoDate } from '../../lib/format';
@@ -86,6 +87,7 @@ export default function DoctorsAvailableScreen({ route, navigation }: { route: a
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <PhotoCard source={require('../../../assets/photos/tablette-medecin.jpg')} height={140} />
       <Text style={styles.title}>{fr ? 'Médecins disponibles' : 'Available doctors'}</Text>
       <Text style={styles.lead}>{fr ? 'Les horaires libres des prochains jours. Touchez-en un pour réserver.' : 'Free times in the coming days. Tap one to book.'}</Text>
 
