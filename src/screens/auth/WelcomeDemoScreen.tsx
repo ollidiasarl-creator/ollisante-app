@@ -13,7 +13,6 @@ import { LanguageSwitch } from '../../components/LanguageSwitch';
 import { NewsArt, newsImage, useNewsMeta } from '../../components/NewsCards';
 import { Button } from '../../components/ui';
 import { PlacePicker } from '../../components/PlacePicker';
-import { PhotoCard } from '../../components/PhotoCard';
 import { SearchResults } from '../shared/SearchScreen';
 import { useI18n } from '../../i18n';
 import { colors, radius, spacing, type } from '../../theme';
@@ -283,10 +282,6 @@ export default function WelcomeDemoScreen({ navigation }: { navigation: any }) {
           {book('account-heart-outline', t('welcome.tile.patient'), t('welcome.tile.patient.text'), colors.green, colors.white, () => ask('patient'))}
           {book('stethoscope', t('welcome.tile.practitioner'), t('welcome.tile.practitioner.text'), colors.navy, colors.white, () => ask('practitioner'))}
           {book('hospital-building', t('welcome.tile.structure'), t('welcome.tile.structure.text'), colors.gold, colors.navy, () => ask('structure'))}
-        </View>
-
-        <View style={styles.section}>
-          <PhotoCard source={require('../../../assets/photos/medecin.jpg')} title="Des médecins vérifiés, près de chez vous" text="Chaque professionnel est contrôlé par notre équipe avant d'apparaître sur Ollisanté." />
         </View>
 
 
